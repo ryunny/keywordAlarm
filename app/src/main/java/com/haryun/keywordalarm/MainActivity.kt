@@ -68,6 +68,8 @@ import com.haryun.keywordalarm.ui.theme.KeywordAlarmTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // AdMob 초기화
+        com.google.android.gms.ads.MobileAds.initialize(this)
         enableEdgeToEdge()
         setContent {
             KeywordAlarmTheme {
@@ -274,7 +276,7 @@ fun KeywordAlarmApp() {
             TopAppBar(
                 title = {
                     Text(
-                        "키워드 알람",
+                        "알람키",
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -282,6 +284,9 @@ fun KeywordAlarmApp() {
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
             )
+        },
+        bottomBar = {
+            BannerAdView()
         }
     ) { paddingValues ->
         Column(
@@ -1492,6 +1497,24 @@ fun triggerTestAlarm(
     if (soundEnabled) {
         startPreviewSound(context, volumePercent, customSoundUri) {}
     }
+}
+
+// 배너 광고
+// 테스트 광고 ID: ca-app-pub-3940256099942544/6300978111
+// 출시 전 실제 AdMob 광고 ID로 교체 필요
+@Composable
+fun BannerAdView() {
+    val context = LocalContext.current
+    androidx.compose.ui.viewinterop.AndroidView(
+        factory = {
+            com.google.android.gms.ads.AdView(context).apply {
+                setAdSize(com.google.android.gms.ads.AdSize.BANNER)
+                adUnitId = "ca-app-pub-3940256099942544/6300978111" // 테스트 ID
+                loadAd(com.google.android.gms.ads.AdRequest.Builder().build())
+            }
+        },
+        modifier = Modifier.fillMaxWidth()
+    )
 }
 
 // 알림 리스너 권한 확인
