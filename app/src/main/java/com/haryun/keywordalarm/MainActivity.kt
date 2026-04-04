@@ -1493,10 +1493,9 @@ fun triggerTestAlarm(
     customSoundUri: String?,
     alarmRepeat: AlarmRepeat = AlarmRepeat.ONCE
 ) {
-    // 화면 켜기 + 알림 표시
+    // 화면 켜기
     val keywordRepository = KeywordRepository(context)
     if (keywordRepository.isWakeScreenEnabled()) {
-        // WakeLock
         try {
             val pm = context.getSystemService(android.content.Context.POWER_SERVICE) as android.os.PowerManager
             @Suppress("DEPRECATION")
@@ -1505,27 +1504,6 @@ fun triggerTestAlarm(
                 "알람키:TestWakeLock"
             ).acquire(5000)
         } catch (e: Exception) { }
-
-        // 알림 표시
-        val channelId = "alarm_key_channel"
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            val channel = android.app.NotificationChannel(
-                channelId, "알람키 알림", android.app.NotificationManager.IMPORTANCE_HIGH
-            )
-            (context.getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager)
-                .createNotificationChannel(channel)
-        }
-        val notification = androidx.core.app.NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(android.R.drawable.ic_lock_silent_mode_off)
-            .setContentTitle("알람키 — 테스트 알람")
-            .setContentText("테스트 알람이 울렸습니다")
-            .setPriority(androidx.core.app.NotificationCompat.PRIORITY_HIGH)
-            .setCategory(androidx.core.app.NotificationCompat.CATEGORY_ALARM)
-            .setVisibility(androidx.core.app.NotificationCompat.VISIBILITY_PUBLIC)
-            .setAutoCancel(true)
-            .build()
-        (context.getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager)
-            .notify(9999, notification)
     }
 
     // 진동
@@ -1538,6 +1516,7 @@ fun triggerTestAlarm(
             @Suppress("DEPRECATION")
             context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as android.os.Vibrator
         }
+        vibrator.cancel() // 이전 진동 취소 후 새로 시작
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             vibrator.vibrate(android.os.VibrationEffect.createWaveform(vibrationPattern.pattern, -1))
         } else {

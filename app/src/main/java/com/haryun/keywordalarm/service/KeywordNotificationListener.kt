@@ -164,6 +164,7 @@ class KeywordNotificationListener : NotificationListenerService() {
             VibrationPattern.valueOf(keywordRepository.getVibrationPattern()).pattern
         } catch (e: Exception) { VibrationPattern.DEFAULT.pattern }
 
+        vibrator.cancel() // 이전 진동 취소 후 새로 시작
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
         } else {
@@ -260,6 +261,7 @@ class KeywordNotificationListener : NotificationListenerService() {
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setOngoing(true)
+            .setDeleteIntent(stopPendingIntent) // 알림 스와이프로 지울 때도 알람 정지
             .addAction(android.R.drawable.ic_media_pause, "정지", stopPendingIntent)
             .build()
 
