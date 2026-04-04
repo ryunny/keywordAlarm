@@ -103,7 +103,7 @@ class KeywordNotificationListener : NotificationListenerService() {
             showAlarmNotification(keyword, appName)
         }
         if (keywordRepository.isVibrationEnabled()) vibrate()
-        if (keywordRepository.isSoundEnabled()) {
+        if (keywordRepository.isSoundEnabled() && !AlarmController.isPlaying()) {
             repeatCount = 0
             playOnce()
         }
@@ -156,6 +156,7 @@ class KeywordNotificationListener : NotificationListenerService() {
                 audioManager.setStreamVolume(AudioManager.STREAM_ALARM, targetVolume, 0)
                 prepare()
                 start()
+                AlarmController.register(this)
 
                 setOnCompletionListener {
                     release()

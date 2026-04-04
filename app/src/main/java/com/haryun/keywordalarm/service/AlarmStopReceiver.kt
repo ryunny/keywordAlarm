@@ -7,7 +7,7 @@ import android.content.Intent
 
 class AlarmStopReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        KeywordNotificationListener.instance?.stopAlarm()
+        AlarmController.stop()
         (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
             .cancel(KeywordNotificationListener.NOTIFICATION_ID)
     }

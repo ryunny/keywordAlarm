@@ -1400,8 +1400,10 @@ fun startPreviewSound(
             )
             prepare()
             start()
+            com.haryun.keywordalarm.service.AlarmController.register(this)
             setOnCompletionListener {
                 release()
+                com.haryun.keywordalarm.service.AlarmController.clear()
                 onStop()
             }
         }
