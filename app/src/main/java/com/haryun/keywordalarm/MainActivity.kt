@@ -52,6 +52,7 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.haryun.keywordalarm.data.AlarmHistoryItem
+import com.haryun.keywordalarm.data.AlarmRepeat
 import com.haryun.keywordalarm.data.AppInfo
 import com.haryun.keywordalarm.data.AppUtils
 import com.haryun.keywordalarm.data.KeywordRepository
@@ -98,6 +99,13 @@ fun KeywordAlarmApp() {
     var hasNotificationAccess by remember { mutableStateOf(isNotificationServiceEnabled(context)) }
 
     // 설정 상태
+    var isWakeScreenEnabled by remember { mutableStateOf(keywordRepository.isWakeScreenEnabled()) }
+    var selectedAlarmRepeat by remember {
+        mutableStateOf(
+            try { AlarmRepeat.valueOf(keywordRepository.getAlarmRepeat()) }
+            catch (e: Exception) { AlarmRepeat.ONCE }
+        )
+    }
     var isVibrationEnabled by remember { mutableStateOf(keywordRepository.isVibrationEnabled()) }
     var selectedVibrationPattern by remember {
         mutableStateOf(
@@ -539,6 +547,48 @@ fun KeywordAlarmApp() {
 
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
+                    // 알람 반복 횟수
+                    Text("알람 반복", fontSize = 14.sp)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        AlarmRepeat.entries.forEach { repeat ->
+                            FilterChip(
+                                selected = selectedAlarmRepeat == repeat,
+                                onClick = {
+                                    selectedAlarmRepeat = repeat
+                                    keywordRepository.setAlarmRepeat(repeat)
+                                },
+                                label = { Text(repeat.label, fontSize = 12.sp) }
+                            )
+                        }
+                    }
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                    // 화면 켜기
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text("화면 켜기")
+                            Text(
+                                "알람 시 잠금화면 위에 알림 표시",
+                                fontSize = 12.sp, color = Color.Gray
+                            )
+                        }
+                        Switch(
+                            checked = isWakeScreenEnabled,
+                            onCheckedChange = {
+                                isWakeScreenEnabled = it
+                                keywordRepository.setWakeScreenEnabled(it)
+                            }
+                        )
+                    }
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
                     // 테스트 알람 버튼
                     Button(
                         onClick = {
@@ -548,7 +598,8 @@ fun KeywordAlarmApp() {
                                 selectedVibrationPattern,
                                 isSoundEnabled,
                                 volumeLevel.toInt(),
-                                customSoundUri
+                                customSoundUri,
+                                selectedAlarmRepeat
                             )
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -693,6 +744,60 @@ fun KeywordAlarmApp() {
                             onDelete = {
                                 keywordRepository.removeGlobalKeyword(keyword)
                                 globalKeywords = keywordRepository.getGlobalKeywords()
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // ===== 제외 키워드 섹션 =====
+            Text("제외 키워드", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Text("이 단어가 포함된 알림은 무시합니다", fontSize = 12.sp, color = Color.Gray)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            var newExclusionKeyword by remember { mutableStateOf("") }
+            var exclusionKeywords by remember { mutableStateOf(keywordRepository.getExclusionKeywords()) }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = newExclusionKeyword,
+                    onValueChange = { newExclusionKeyword = it },
+                    modifier = Modifier.weight(1f),
+                    placeholder = { Text("예: 광고, 이벤트") },
+                    singleLine = true
+                )
+                Button(onClick = {
+                    if (newExclusionKeyword.isNotBlank()) {
+                        keywordRepository.addExclusionKeyword(newExclusionKeyword)
+                        exclusionKeywords = keywordRepository.getExclusionKeywords()
+                        newExclusionKeyword = ""
+                    }
+                }) {
+                    Icon(Icons.Default.Add, contentDescription = "추가")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            if (exclusionKeywords.isEmpty()) {
+                Text(
+                    "등록된 제외 키워드가 없습니다",
+                    color = Color.Gray, fontSize = 14.sp,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    exclusionKeywords.forEach { keyword ->
+                        KeywordChip(
+                            keyword = keyword,
+                            onDelete = {
+                                keywordRepository.removeExclusionKeyword(keyword)
+                                exclusionKeywords = keywordRepository.getExclusionKeywords()
                             }
                         )
                     }
@@ -1309,7 +1414,8 @@ fun triggerTestAlarm(
     vibrationPattern: VibrationPattern,
     soundEnabled: Boolean,
     volumePercent: Int,
-    customSoundUri: String?
+    customSoundUri: String?,
+    alarmRepeat: AlarmRepeat = AlarmRepeat.ONCE
 ) {
     if (vibrationEnabled) {
         val vibrator = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {

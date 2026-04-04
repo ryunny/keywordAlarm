@@ -18,6 +18,9 @@ class KeywordRepository(private val context: Context) {
         private const val KEY_SOUND_ENABLED = "sound_enabled"
         private const val KEY_VOLUME_LEVEL = "volume_level"
         private const val KEY_CUSTOM_SOUND_URI = "custom_sound_uri"
+        private const val KEY_EXCLUSION_KEYWORDS = "exclusion_keywords"
+        private const val KEY_ALARM_REPEAT = "alarm_repeat"
+        private const val KEY_WAKE_SCREEN = "wake_screen"
         private const val KEY_DISABLED_KEYWORDS = "disabled_keywords"
         private const val KEY_SCHEDULE_ENABLED = "schedule_enabled"
         private const val KEY_SCHEDULE_START_HOUR = "schedule_start_hour"
@@ -168,6 +171,11 @@ class KeywordRepository(private val context: Context) {
     fun findMatchingKeyword(packageName: String, content: String): String? {
         val lowerContent = content.lowercase()
 
+        // 0. 제외 키워드 체크 — 포함되면 무시
+        for (exc in getExclusionKeywords()) {
+            if (exc.isNotBlank() && lowerContent.contains(exc.lowercase())) return null
+        }
+
         // 1. 글로벌 키워드 확인 (비활성화된 키워드 제외)
         for (keyword in getGlobalKeywords()) {
             if (keyword.isNotBlank() && isKeywordEnabled("global", keyword) && lowerContent.contains(keyword.lowercase())) {
@@ -258,6 +266,41 @@ class KeywordRepository(private val context: Context) {
         prefs.edit().remove(KEY_CUSTOM_SOUND_URI).apply()
     }
 
+    // ===== 제외 키워드 =====
+
+    fun getExclusionKeywords(): List<String> {
+        val s = prefs.getString(KEY_EXCLUSION_KEYWORDS, "") ?: ""
+        return if (s.isBlank()) emptyList() else s.split(",").map { it.trim() }.filter { it.isNotBlank() }
+    }
+
+    fun addExclusionKeyword(keyword: String) {
+        if (keyword.isBlank()) return
+        val current = getExclusionKeywords().toMutableList()
+        if (!current.contains(keyword.trim())) {
+            current.add(keyword.trim())
+            prefs.edit().putString(KEY_EXCLUSION_KEYWORDS, current.joinToString(",")).apply()
+        }
+    }
+
+    fun removeExclusionKeyword(keyword: String) {
+        val current = getExclusionKeywords().toMutableList()
+        current.remove(keyword)
+        prefs.edit().putString(KEY_EXCLUSION_KEYWORDS, current.joinToString(",")).apply()
+    }
+
+    // ===== 알람 반복 횟수 =====
+
+    fun getAlarmRepeat(): String =
+        prefs.getString(KEY_ALARM_REPEAT, AlarmRepeat.ONCE.name) ?: AlarmRepeat.ONCE.name
+
+    fun setAlarmRepeat(repeat: AlarmRepeat) =
+        prefs.edit().putString(KEY_ALARM_REPEAT, repeat.name).apply()
+
+    // ===== 화면 켜기 =====
+
+    fun isWakeScreenEnabled(): Boolean = prefs.getBoolean(KEY_WAKE_SCREEN, false)
+    fun setWakeScreenEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_WAKE_SCREEN, enabled).apply()
+
     // ===== 키워드 개별 ON/OFF =====
     // key 형식: "global" (통합) 또는 packageName (앱별)
 
@@ -345,6 +388,12 @@ class KeywordRepository(private val context: Context) {
     fun clearAlarmHistory() {
         prefs.edit().remove(KEY_ALARM_HISTORY).apply()
     }
+}
+
+enum class AlarmRepeat(val label: String) {
+    ONCE("1번만"),
+    THREE("3번 반복"),
+    LOOP("계속 반복 (2분)")
 }
 
 enum class VibrationPattern(val label: String, val pattern: LongArray) {

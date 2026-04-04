@@ -12,6 +12,9 @@
     <!-- 방해금지 모드 접근 권한 -->
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
 
+    <!-- 화면 켜기 권한 -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
     <!-- 포그라운드 서비스 권한 -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
