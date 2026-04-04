@@ -97,6 +97,9 @@ fun KeywordAlarmApp() {
     var volumeLevel by remember { mutableStateOf(keywordRepository.getVolumeLevel().toFloat()) }
     var customSoundUri by remember { mutableStateOf(keywordRepository.getCustomSoundUri()) }
 
+    // 시스템 알람음 다이얼로그
+    var showSystemRingtoneDialog by remember { mutableStateOf(false) }
+
     // 미리 듣기 상태
     var isPreviewPlaying by remember { mutableStateOf(false) }
     val previewMediaPlayer = remember { mutableStateOf<MediaPlayer?>(null) }
@@ -137,6 +140,19 @@ fun KeywordAlarmApp() {
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
+    }
+
+    // 시스템 알람음 선택 다이얼로그
+    if (showSystemRingtoneDialog) {
+        SystemRingtoneDialog(
+            currentUri = customSoundUri,
+            onDismiss = { showSystemRingtoneDialog = false },
+            onSelected = { uri, _ ->
+                customSoundUri = uri
+                keywordRepository.setCustomSoundUri(uri)
+                showSystemRingtoneDialog = false
+            }
+        )
     }
 
     // 앱 선택 다이얼로그
@@ -369,12 +385,24 @@ fun KeywordAlarmApp() {
                         )
                         Spacer(modifier = Modifier.height(8.dp))
 
+                        // 현재 선택된 알람음 이름 표시
+                        val soundLabel = remember(customSoundUri) {
+                            getSystemRingtoneLabel(context, customSoundUri)
+                        }
+                        Text(
+                            text = soundLabel,
+                            fontSize = 12.sp,
+                            color = Color(0xFF2E7D32),
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
+                            // 시스템 알람음 선택
                             OutlinedButton(
-                                onClick = { soundPickerLauncher.launch("audio/*") },
+                                onClick = { showSystemRingtoneDialog = true },
                                 modifier = Modifier.weight(1f)
                             ) {
                                 Icon(
@@ -383,37 +411,41 @@ fun KeywordAlarmApp() {
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    if (customSoundUri != null) "변경" else "파일 선택",
-                                    fontSize = 14.sp
-                                )
+                                Text("시스템 알람음", fontSize = 13.sp)
                             }
 
-                            if (customSoundUri != null) {
-                                OutlinedButton(
-                                    onClick = {
-                                        customSoundUri = null
-                                        keywordRepository.clearCustomSoundUri()
-                                    }
-                                ) {
-                                    Icon(
-                                        Icons.Default.Refresh,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("기본음", fontSize = 14.sp)
-                                }
+                            // 내 파일 선택
+                            OutlinedButton(
+                                onClick = { soundPickerLauncher.launch("audio/*") },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    Icons.Default.Add,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("내 파일", fontSize = 13.sp)
                             }
                         }
 
+                        // 기본음으로 초기화
                         if (customSoundUri != null) {
-                            Text(
-                                text = "커스텀 알람음 설정됨",
-                                fontSize = 12.sp,
-                                color = Color(0xFF2E7D32),
-                                modifier = Modifier.padding(top = 4.dp)
-                            )
+                            TextButton(
+                                onClick = {
+                                    customSoundUri = null
+                                    keywordRepository.clearCustomSoundUri()
+                                },
+                                modifier = Modifier.align(Alignment.End)
+                            ) {
+                                Icon(
+                                    Icons.Default.Refresh,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("기본 알람음으로 초기화", fontSize = 12.sp)
+                            }
                         }
                     }
                 }
@@ -830,6 +862,89 @@ fun AppKeywordDialog(
                 }
             }
         }
+    }
+}
+
+// 시스템 알람음 목록 다이얼로그
+@Composable
+fun SystemRingtoneDialog(
+    currentUri: String?,
+    onDismiss: () -> Unit,
+    onSelected: (uri: String, name: String) -> Unit
+) {
+    val context = LocalContext.current
+    val ringtones = remember {
+        val manager = RingtoneManager(context).apply { setType(RingtoneManager.TYPE_ALARM) }
+        val cursor = manager.cursor
+        val list = mutableListOf<Pair<String, String>>() // uri to name
+        while (cursor.moveToNext()) {
+            val uri = manager.getRingtoneUri(cursor.position).toString()
+            val name = cursor.getString(RingtoneManager.TITLE_COLUMN_INDEX)
+            list.add(uri to name)
+        }
+        cursor.close()
+        list
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.6f),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column {
+                Text(
+                    text = "알람음 선택",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    modifier = Modifier.padding(16.dp)
+                )
+                HorizontalDivider()
+                LazyColumn(modifier = Modifier.weight(1f)) {
+                    items(ringtones) { (uri, name) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onSelected(uri, name) }
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(text = name, fontSize = 14.sp, modifier = Modifier.weight(1f))
+                            if (currentUri == uri) {
+                                Icon(
+                                    Icons.Default.MusicNote,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                        HorizontalDivider()
+                    }
+                }
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .padding(8.dp)
+                ) {
+                    Text("닫기")
+                }
+            }
+        }
+    }
+}
+
+// 현재 설정된 알람음 이름 반환
+fun getSystemRingtoneLabel(context: android.content.Context, uri: String?): String {
+    if (uri == null) return "기본 알람음 (시스템)"
+    return try {
+        val ringtone = RingtoneManager.getRingtone(context, Uri.parse(uri))
+        ringtone?.getTitle(context) ?: "커스텀 알람음"
+    } catch (e: Exception) {
+        "커스텀 알람음"
     }
 }
 
