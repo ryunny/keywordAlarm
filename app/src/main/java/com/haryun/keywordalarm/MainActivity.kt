@@ -1407,7 +1407,7 @@ fun startPreviewSound(
     }
 }
 
-// 테스트 알람 — 현재 설정 그대로 진동 + 소리 즉시 실행
+// 테스트 알람 — 현재 설정 그대로 진동 + 소리 + 화면 켜기 즉시 실행
 fun triggerTestAlarm(
     context: android.content.Context,
     vibrationEnabled: Boolean,
@@ -1417,6 +1417,42 @@ fun triggerTestAlarm(
     customSoundUri: String?,
     alarmRepeat: AlarmRepeat = AlarmRepeat.ONCE
 ) {
+    // 화면 켜기 + 알림 표시
+    val keywordRepository = KeywordRepository(context)
+    if (keywordRepository.isWakeScreenEnabled()) {
+        // WakeLock
+        try {
+            val pm = context.getSystemService(android.content.Context.POWER_SERVICE) as android.os.PowerManager
+            @Suppress("DEPRECATION")
+            pm.newWakeLock(
+                android.os.PowerManager.SCREEN_BRIGHT_WAKE_LOCK or android.os.PowerManager.ACQUIRE_CAUSES_WAKEUP,
+                "알람키:TestWakeLock"
+            ).acquire(5000)
+        } catch (e: Exception) { }
+
+        // 알림 표시
+        val channelId = "alarm_key_channel"
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val channel = android.app.NotificationChannel(
+                channelId, "알람키 알림", android.app.NotificationManager.IMPORTANCE_HIGH
+            )
+            (context.getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager)
+                .createNotificationChannel(channel)
+        }
+        val notification = androidx.core.app.NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(android.R.drawable.ic_lock_silent_mode_off)
+            .setContentTitle("알람키 — 테스트 알람")
+            .setContentText("테스트 알람이 울렸습니다")
+            .setPriority(androidx.core.app.NotificationCompat.PRIORITY_HIGH)
+            .setCategory(androidx.core.app.NotificationCompat.CATEGORY_ALARM)
+            .setVisibility(androidx.core.app.NotificationCompat.VISIBILITY_PUBLIC)
+            .setAutoCancel(true)
+            .build()
+        (context.getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager)
+            .notify(9999, notification)
+    }
+
+    // 진동
     if (vibrationEnabled) {
         val vibrator = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             val vm = context.getSystemService(android.content.Context.VIBRATOR_MANAGER_SERVICE)
@@ -1434,6 +1470,7 @@ fun triggerTestAlarm(
         }
     }
 
+    // 소리
     if (soundEnabled) {
         startPreviewSound(context, volumePercent, customSoundUri) {}
     }
