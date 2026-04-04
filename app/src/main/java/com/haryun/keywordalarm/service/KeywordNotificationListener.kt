@@ -31,7 +31,9 @@ class KeywordNotificationListener : NotificationListenerService() {
     companion object {
         private const val TAG = "KeywordNotificationListener"
         const val CHANNEL_ID = "alarm_key_channel"
+        const val CHANNEL_STATUS_ID = "alarm_key_status"
         const val NOTIFICATION_ID = 1001
+        const val STATUS_NOTIFICATION_ID = 1002
         const val ACTION_STOP_ALARM = "com.haryun.keywordalarm.STOP_ALARM"
 
         var instance: KeywordNotificationListener? = null
@@ -48,18 +50,58 @@ class KeywordNotificationListener : NotificationListenerService() {
         instance = this
         keywordRepository = KeywordRepository(applicationContext)
         createNotificationChannel()
+        updateStatusNotification()
         Log.d(TAG, "알림 리스너 서비스 시작됨")
     }
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID, "알람키 알림",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply { description = "키워드 매칭 시 표시되는 알림" }
-            (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
-                .createNotificationChannel(channel)
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+            // 알람 채널 (소리/진동 있음)
+            nm.createNotificationChannel(
+                NotificationChannel(CHANNEL_ID, "알람키 알림", NotificationManager.IMPORTANCE_HIGH)
+                    .apply { description = "키워드 매칭 시 표시되는 알림" }
+            )
+
+            // 상태 채널 (무음, 항상 표시)
+            nm.createNotificationChannel(
+                NotificationChannel(CHANNEL_STATUS_ID, "알람키 상태", NotificationManager.IMPORTANCE_LOW)
+                    .apply {
+                        description = "알람키 실행 상태"
+                        setSound(null, null)
+                        enableVibration(false)
+                    }
+            )
         }
+    }
+
+    fun updateStatusNotification() {
+        val isEnabled = keywordRepository.isServiceEnabled()
+
+        val toggleIntent = Intent(this, ServiceToggleReceiver::class.java)
+        val togglePendingIntent = PendingIntent.getBroadcast(
+            this, 1, toggleIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val notification = NotificationCompat.Builder(this, CHANNEL_STATUS_ID)
+            .setSmallIcon(android.R.drawable.ic_lock_silent_mode_off)
+            .setContentTitle("알람키")
+            .setContentText(if (isEnabled) "키워드 감지 중" else "비활성화됨")
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setOngoing(true)
+            .setSilent(true)
+            .addAction(
+                if (isEnabled) android.R.drawable.ic_media_pause
+                else android.R.drawable.ic_media_play,
+                if (isEnabled) "끄기" else "켜기",
+                togglePendingIntent
+            )
+            .build()
+
+        (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
+            .notify(STATUS_NOTIFICATION_ID, notification)
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {

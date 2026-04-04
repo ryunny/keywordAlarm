@@ -359,6 +359,8 @@ fun KeywordAlarmApp() {
                         onCheckedChange = { enabled ->
                             isServiceEnabled = enabled
                             keywordRepository.setServiceEnabled(enabled)
+                            com.haryun.keywordalarm.service.KeywordNotificationListener
+                                .instance?.updateStatusNotification()
                         },
                         enabled = hasNotificationAccess
                     )
