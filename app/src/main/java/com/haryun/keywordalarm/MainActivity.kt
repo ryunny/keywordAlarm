@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Stop
@@ -483,6 +484,34 @@ fun KeywordAlarmApp() {
                                 Text("기본 알람음으로 초기화", fontSize = 12.sp)
                             }
                         }
+                    }
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                    // 테스트 알람 버튼
+                    Button(
+                        onClick = {
+                            triggerTestAlarm(
+                                context,
+                                isVibrationEnabled,
+                                selectedVibrationPattern,
+                                isSoundEnabled,
+                                volumeLevel.toInt(),
+                                customSoundUri
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.secondary
+                        )
+                    ) {
+                        Icon(
+                            Icons.Default.Notifications,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("테스트 알람 울리기")
                     }
                 }
             }
@@ -1035,6 +1064,37 @@ fun startPreviewSound(
         android.util.Log.e("PreviewSound", "미리 듣기 실패: ${e.message}")
         onStop()
         null
+    }
+}
+
+// 테스트 알람 — 현재 설정 그대로 진동 + 소리 즉시 실행
+fun triggerTestAlarm(
+    context: android.content.Context,
+    vibrationEnabled: Boolean,
+    vibrationPattern: VibrationPattern,
+    soundEnabled: Boolean,
+    volumePercent: Int,
+    customSoundUri: String?
+) {
+    if (vibrationEnabled) {
+        val vibrator = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            val vm = context.getSystemService(android.content.Context.VIBRATOR_MANAGER_SERVICE)
+                    as android.os.VibratorManager
+            vm.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as android.os.Vibrator
+        }
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            vibrator.vibrate(android.os.VibrationEffect.createWaveform(vibrationPattern.pattern, -1))
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(vibrationPattern.pattern, -1)
+        }
+    }
+
+    if (soundEnabled) {
+        startPreviewSound(context, volumePercent, customSoundUri) {}
     }
 }
 
