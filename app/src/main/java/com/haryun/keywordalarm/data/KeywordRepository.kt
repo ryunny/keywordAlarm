@@ -28,7 +28,8 @@ class KeywordRepository(private val context: Context) {
         private const val KEY_SCHEDULE_END_HOUR = "schedule_end_hour"
         private const val KEY_SCHEDULE_END_MINUTE = "schedule_end_minute"
         private const val KEY_ALARM_HISTORY = "alarm_history"
-        private const val MAX_HISTORY = 50
+        private const val MAX_HISTORY = 10
+        private const val HISTORY_24H_MS = 24 * 60 * 60 * 1000L
     }
 
     private val prefs: SharedPreferences =
@@ -351,6 +352,7 @@ class KeywordRepository(private val context: Context) {
 
     fun getAlarmHistory(): List<AlarmHistoryItem> {
         val json = prefs.getString(KEY_ALARM_HISTORY, "[]") ?: "[]"
+        val cutoff = System.currentTimeMillis() - HISTORY_24H_MS
         return try {
             val arr = JSONArray(json)
             (0 until arr.length()).map { i ->
@@ -361,7 +363,7 @@ class KeywordRepository(private val context: Context) {
                     appPackage = obj.getString("appPackage"),
                     appName = obj.getString("appName")
                 )
-            }.reversed()
+            }.filter { it.timestamp >= cutoff }.reversed()
         } catch (e: Exception) { emptyList() }
     }
 

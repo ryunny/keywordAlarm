@@ -901,38 +901,48 @@ fun KeywordAlarmApp() {
             Spacer(modifier = Modifier.height(24.dp))
 
             // ===== 알림 이력 섹션 =====
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text("알림 이력", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                    Text("최근 울린 알람 기록", fontSize = 12.sp, color = Color.Gray)
-                }
-                if (alarmHistory.isNotEmpty()) {
-                    TextButton(onClick = {
+            var showHistoryDialog by remember { mutableStateOf(false) }
+
+            if (showHistoryDialog) {
+                AlarmHistoryDialog(
+                    history = alarmHistory,
+                    onClear = {
                         keywordRepository.clearAlarmHistory()
                         alarmHistory = emptyList()
-                    }) {
-                        Text("전체 삭제", fontSize = 12.sp, color = Color(0xFFE57373))
-                    }
-                }
+                    },
+                    onDismiss = { showHistoryDialog = false }
+                )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            if (alarmHistory.isEmpty()) {
-                Text(
-                    "아직 알람이 울린 기록이 없습니다",
-                    color = Color.Gray, fontSize = 14.sp,
-                    modifier = Modifier.padding(vertical = 16.dp)
-                )
-            } else {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    alarmHistory.forEach { item ->
-                        AlarmHistoryCard(item)
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        alarmHistory = keywordRepository.getAlarmHistory()
+                        showHistoryDialog = true
                     }
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text("알림 이력", fontWeight = FontWeight.Medium, fontSize = 16.sp)
+                        Text(
+                            if (alarmHistory.isEmpty()) "최근 24시간 기록 없음"
+                            else "최근 24시간 ${alarmHistory.size}건",
+                            fontSize = 12.sp, color = Color.Gray
+                        )
+                    }
+                    Icon(
+                        Icons.Default.Refresh,
+                        contentDescription = null,
+                        tint = Color.Gray,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
 
@@ -988,33 +998,76 @@ fun KeywordChip(
     }
 }
 
+
 @Composable
-fun AlarmHistoryCard(item: AlarmHistoryItem) {
+fun AlarmHistoryDialog(
+    history: List<AlarmHistoryItem>,
+    onClear: () -> Unit,
+    onDismiss: () -> Unit
+) {
     val sdf = remember { SimpleDateFormat("MM/dd HH:mm", Locale.KOREA) }
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Row(
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxHeight(0.6f),
+            shape = RoundedCornerShape(16.dp)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "\"${item.keyword}\"",
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 14.sp
-                )
-                Text(
-                    text = item.appName,
-                    fontSize = 12.sp,
-                    color = Color.Gray
-                )
+            Column {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text("알림 이력", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text("최근 24시간", fontSize = 12.sp, color = Color.Gray)
+                    }
+                    if (history.isNotEmpty()) {
+                        TextButton(onClick = onClear) {
+                            Text("전체 삭제", fontSize = 12.sp, color = Color(0xFFE57373))
+                        }
+                    }
+                }
+                HorizontalDivider()
+                if (history.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("최근 24시간 내 알람 기록이 없습니다", color = Color.Gray, fontSize = 14.sp)
+                    }
+                } else {
+                    LazyColumn(modifier = Modifier.weight(1f)) {
+                        items(history) { item ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("\"${item.keyword}\"", fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                                    Text(item.appName, fontSize = 12.sp, color = Color.Gray)
+                                }
+                                Text(sdf.format(Date(item.timestamp)), fontSize = 12.sp, color = Color.Gray)
+                            }
+                            HorizontalDivider()
+                        }
+                    }
+                }
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .padding(8.dp)
+                ) { Text("닫기") }
             }
-            Text(
-                text = sdf.format(Date(item.timestamp)),
-                fontSize = 12.sp,
-                color = Color.Gray
-            )
         }
     }
 }
