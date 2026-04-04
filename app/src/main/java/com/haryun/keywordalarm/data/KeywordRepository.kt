@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.Calendar
 
 class KeywordRepository(private val context: Context) {
 
@@ -17,6 +18,14 @@ class KeywordRepository(private val context: Context) {
         private const val KEY_SOUND_ENABLED = "sound_enabled"
         private const val KEY_VOLUME_LEVEL = "volume_level"
         private const val KEY_CUSTOM_SOUND_URI = "custom_sound_uri"
+        private const val KEY_DISABLED_KEYWORDS = "disabled_keywords"
+        private const val KEY_SCHEDULE_ENABLED = "schedule_enabled"
+        private const val KEY_SCHEDULE_START_HOUR = "schedule_start_hour"
+        private const val KEY_SCHEDULE_START_MINUTE = "schedule_start_minute"
+        private const val KEY_SCHEDULE_END_HOUR = "schedule_end_hour"
+        private const val KEY_SCHEDULE_END_MINUTE = "schedule_end_minute"
+        private const val KEY_ALARM_HISTORY = "alarm_history"
+        private const val MAX_HISTORY = 50
     }
 
     private val prefs: SharedPreferences =
@@ -159,16 +168,16 @@ class KeywordRepository(private val context: Context) {
     fun findMatchingKeyword(packageName: String, content: String): String? {
         val lowerContent = content.lowercase()
 
-        // 1. 글로벌 키워드 확인
+        // 1. 글로벌 키워드 확인 (비활성화된 키워드 제외)
         for (keyword in getGlobalKeywords()) {
-            if (keyword.isNotBlank() && lowerContent.contains(keyword.lowercase())) {
+            if (keyword.isNotBlank() && isKeywordEnabled("global", keyword) && lowerContent.contains(keyword.lowercase())) {
                 return keyword
             }
         }
 
-        // 2. 앱별 키워드 확인
+        // 2. 앱별 키워드 확인 (비활성화된 키워드 제외)
         for (keyword in getAppKeywords(packageName)) {
-            if (keyword.isNotBlank() && lowerContent.contains(keyword.lowercase())) {
+            if (keyword.isNotBlank() && isKeywordEnabled(packageName, keyword) && lowerContent.contains(keyword.lowercase())) {
                 return keyword
             }
         }
@@ -247,6 +256,94 @@ class KeywordRepository(private val context: Context) {
 
     fun clearCustomSoundUri() {
         prefs.edit().remove(KEY_CUSTOM_SOUND_URI).apply()
+    }
+
+    // ===== 키워드 개별 ON/OFF =====
+    // key 형식: "global" (통합) 또는 packageName (앱별)
+
+    private fun disabledKeywordsKey(scope: String, keyword: String) = "$scope::$keyword"
+
+    fun isKeywordEnabled(scope: String, keyword: String): Boolean {
+        val disabled = prefs.getString(KEY_DISABLED_KEYWORDS, "") ?: ""
+        return !disabled.split(",").contains(disabledKeywordsKey(scope, keyword))
+    }
+
+    fun setKeywordEnabled(scope: String, keyword: String, enabled: Boolean) {
+        val current = (prefs.getString(KEY_DISABLED_KEYWORDS, "") ?: "")
+            .split(",").filter { it.isNotBlank() }.toMutableSet()
+        val key = disabledKeywordsKey(scope, keyword)
+        if (enabled) current.remove(key) else current.add(key)
+        prefs.edit().putString(KEY_DISABLED_KEYWORDS, current.joinToString(",")).apply()
+    }
+
+    // ===== 시간대별 설정 =====
+
+    fun isScheduleEnabled(): Boolean = prefs.getBoolean(KEY_SCHEDULE_ENABLED, false)
+    fun setScheduleEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_SCHEDULE_ENABLED, enabled).apply()
+
+    fun getScheduleStartHour(): Int = prefs.getInt(KEY_SCHEDULE_START_HOUR, 8)
+    fun getScheduleStartMinute(): Int = prefs.getInt(KEY_SCHEDULE_START_MINUTE, 0)
+    fun getScheduleEndHour(): Int = prefs.getInt(KEY_SCHEDULE_END_HOUR, 23)
+    fun getScheduleEndMinute(): Int = prefs.getInt(KEY_SCHEDULE_END_MINUTE, 0)
+
+    fun setScheduleStart(hour: Int, minute: Int) {
+        prefs.edit().putInt(KEY_SCHEDULE_START_HOUR, hour).putInt(KEY_SCHEDULE_START_MINUTE, minute).apply()
+    }
+
+    fun setScheduleEnd(hour: Int, minute: Int) {
+        prefs.edit().putInt(KEY_SCHEDULE_END_HOUR, hour).putInt(KEY_SCHEDULE_END_MINUTE, minute).apply()
+    }
+
+    fun isCurrentTimeInSchedule(): Boolean {
+        if (!isScheduleEnabled()) return true
+        val now = Calendar.getInstance()
+        val current = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
+        val start = getScheduleStartHour() * 60 + getScheduleStartMinute()
+        val end = getScheduleEndHour() * 60 + getScheduleEndMinute()
+        return if (start <= end) current in start..end
+        else current >= start || current <= end // 자정 넘기는 경우 (예: 22:00~08:00)
+    }
+
+    // ===== 알림 이력 =====
+
+    fun getAlarmHistory(): List<AlarmHistoryItem> {
+        val json = prefs.getString(KEY_ALARM_HISTORY, "[]") ?: "[]"
+        return try {
+            val arr = JSONArray(json)
+            (0 until arr.length()).map { i ->
+                val obj = arr.getJSONObject(i)
+                AlarmHistoryItem(
+                    timestamp = obj.getLong("timestamp"),
+                    keyword = obj.getString("keyword"),
+                    appPackage = obj.getString("appPackage"),
+                    appName = obj.getString("appName")
+                )
+            }.reversed()
+        } catch (e: Exception) { emptyList() }
+    }
+
+    fun addAlarmHistory(keyword: String, appPackage: String, appName: String) {
+        val current = try {
+            val arr = JSONArray(prefs.getString(KEY_ALARM_HISTORY, "[]") ?: "[]")
+            (0 until arr.length()).map { arr.getJSONObject(it) }.toMutableList()
+        } catch (e: Exception) { mutableListOf() }
+
+        val newItem = JSONObject().apply {
+            put("timestamp", System.currentTimeMillis())
+            put("keyword", keyword)
+            put("appPackage", appPackage)
+            put("appName", appName)
+        }
+        current.add(newItem)
+
+        // 최대 50개 유지
+        val trimmed = if (current.size > MAX_HISTORY) current.takeLast(MAX_HISTORY) else current
+        val result = JSONArray().apply { trimmed.forEach { put(it) } }
+        prefs.edit().putString(KEY_ALARM_HISTORY, result.toString()).apply()
+    }
+
+    fun clearAlarmHistory() {
+        prefs.edit().remove(KEY_ALARM_HISTORY).apply()
     }
 }
 

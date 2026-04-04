@@ -15,6 +15,16 @@ data class AppInfo(
 )
 
 /**
+ * 알림 이력 아이템
+ */
+data class AlarmHistoryItem(
+    val timestamp: Long,
+    val keyword: String,
+    val appPackage: String,
+    val appName: String
+)
+
+/**
  * 앱별 키워드 설정을 담는 데이터 클래스
  */
 data class AppKeywordConfig(

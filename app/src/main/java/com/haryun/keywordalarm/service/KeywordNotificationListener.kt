@@ -56,7 +56,22 @@ class KeywordNotificationListener : NotificationListenerService() {
         val matchedKeyword = keywordRepository.findMatchingKeyword(packageName, fullContent)
         if (matchedKeyword != null) {
             Log.d(TAG, "키워드 매칭됨: $matchedKeyword (앱: $packageName)")
+
+            // 시간대 설정 체크
+            if (!keywordRepository.isCurrentTimeInSchedule()) {
+                Log.d(TAG, "스케줄 외 시간 — 알람 스킵")
+                return
+            }
+
             triggerAlarm()
+
+            // 이력 저장
+            val appName = try {
+                packageManager.getApplicationLabel(
+                    packageManager.getApplicationInfo(packageName, 0)
+                ).toString()
+            } catch (e: Exception) { packageName }
+            keywordRepository.addAlarmHistory(matchedKeyword, packageName, appName)
         }
     }
 

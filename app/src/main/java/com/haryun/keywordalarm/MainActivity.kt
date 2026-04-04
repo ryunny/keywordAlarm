@@ -51,10 +51,14 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.haryun.keywordalarm.data.AlarmHistoryItem
 import com.haryun.keywordalarm.data.AppInfo
 import com.haryun.keywordalarm.data.AppUtils
 import com.haryun.keywordalarm.data.KeywordRepository
 import com.haryun.keywordalarm.data.VibrationPattern
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import com.haryun.keywordalarm.ui.theme.KeywordAlarmTheme
 
 class MainActivity : ComponentActivity() {
@@ -105,6 +109,18 @@ fun KeywordAlarmApp() {
     var volumeLevel by remember { mutableStateOf(keywordRepository.getVolumeLevel().toFloat()) }
     var customSoundUri by remember { mutableStateOf(keywordRepository.getCustomSoundUri()) }
 
+    // 시간대 설정
+    var isScheduleEnabled by remember { mutableStateOf(keywordRepository.isScheduleEnabled()) }
+    var scheduleStartHour by remember { mutableStateOf(keywordRepository.getScheduleStartHour()) }
+    var scheduleStartMinute by remember { mutableStateOf(keywordRepository.getScheduleStartMinute()) }
+    var scheduleEndHour by remember { mutableStateOf(keywordRepository.getScheduleEndHour()) }
+    var scheduleEndMinute by remember { mutableStateOf(keywordRepository.getScheduleEndMinute()) }
+    var showStartTimePicker by remember { mutableStateOf(false) }
+    var showEndTimePicker by remember { mutableStateOf(false) }
+
+    // 알림 이력
+    var alarmHistory by remember { mutableStateOf(keywordRepository.getAlarmHistory()) }
+
     // 시스템 알람음 다이얼로그
     var showSystemRingtoneDialog by remember { mutableStateOf(false) }
 
@@ -150,6 +166,34 @@ fun KeywordAlarmApp() {
         }
     }
 
+    // 시작 시간 피커
+    if (showStartTimePicker) {
+        TimePickerDialog(
+            initialHour = scheduleStartHour,
+            initialMinute = scheduleStartMinute,
+            onConfirm = { h, m ->
+                scheduleStartHour = h; scheduleStartMinute = m
+                keywordRepository.setScheduleStart(h, m)
+                showStartTimePicker = false
+            },
+            onDismiss = { showStartTimePicker = false }
+        )
+    }
+
+    // 종료 시간 피커
+    if (showEndTimePicker) {
+        TimePickerDialog(
+            initialHour = scheduleEndHour,
+            initialMinute = scheduleEndMinute,
+            onConfirm = { h, m ->
+                scheduleEndHour = h; scheduleEndMinute = m
+                keywordRepository.setScheduleEnd(h, m)
+                showEndTimePicker = false
+            },
+            onDismiss = { showEndTimePicker = false }
+        )
+    }
+
     // 시스템 알람음 선택 다이얼로그
     if (showSystemRingtoneDialog) {
         SystemRingtoneDialog(
@@ -190,6 +234,13 @@ fun KeywordAlarmApp() {
             onRemoveKeyword = { keyword ->
                 keywordRepository.removeAppKeyword(appInfo.packageName, keyword)
                 appKeywordsMap = keywordRepository.getAllAppKeywords()
+            },
+            isKeywordEnabled = { keyword ->
+                keywordRepository.isKeywordEnabled(appInfo.packageName, keyword)
+            },
+            onToggleKeyword = { keyword ->
+                val cur = keywordRepository.isKeywordEnabled(appInfo.packageName, keyword)
+                keywordRepository.setKeywordEnabled(appInfo.packageName, keyword, !cur)
             }
         )
     }
@@ -518,6 +569,66 @@ fun KeywordAlarmApp() {
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // ===== 시간대 설정 섹션 =====
+            Text("시간대 설정", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Text("설정한 시간에만 알람이 울립니다", fontSize = 12.sp, color = Color.Gray)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("시간대 제한 사용")
+                        Switch(
+                            checked = isScheduleEnabled,
+                            onCheckedChange = {
+                                isScheduleEnabled = it
+                                keywordRepository.setScheduleEnabled(it)
+                            }
+                        )
+                    }
+
+                    if (isScheduleEnabled) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = { showStartTimePicker = true },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("시작", fontSize = 12.sp, color = Color.Gray)
+                                    Text(
+                                        "%02d:%02d".format(scheduleStartHour, scheduleStartMinute),
+                                        fontWeight = FontWeight.Bold, fontSize = 18.sp
+                                    )
+                                }
+                            }
+                            Text("~", modifier = Modifier.align(Alignment.CenterVertically), fontSize = 18.sp)
+                            OutlinedButton(
+                                onClick = { showEndTimePicker = true },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("종료", fontSize = 12.sp, color = Color.Gray)
+                                    Text(
+                                        "%02d:%02d".format(scheduleEndHour, scheduleEndMinute),
+                                        fontWeight = FontWeight.Bold, fontSize = 18.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
             // ===== 통합 키워드 섹션 =====
             Text(
                 text = "통합 키워드",
@@ -573,6 +684,12 @@ fun KeywordAlarmApp() {
                     globalKeywords.forEach { keyword ->
                         KeywordChip(
                             keyword = keyword,
+                            isEnabled = keywordRepository.isKeywordEnabled("global", keyword),
+                            onToggle = {
+                                val cur = keywordRepository.isKeywordEnabled("global", keyword)
+                                keywordRepository.setKeywordEnabled("global", keyword, !cur)
+                                globalKeywords = keywordRepository.getGlobalKeywords()
+                            },
                             onDelete = {
                                 keywordRepository.removeGlobalKeyword(keyword)
                                 globalKeywords = keywordRepository.getGlobalKeywords()
@@ -655,38 +772,152 @@ fun KeywordAlarmApp() {
                 modifier = Modifier.padding(vertical = 8.dp)
             )
 
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // ===== 알림 이력 섹션 =====
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text("알림 이력", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text("최근 울린 알람 기록", fontSize = 12.sp, color = Color.Gray)
+                }
+                if (alarmHistory.isNotEmpty()) {
+                    TextButton(onClick = {
+                        keywordRepository.clearAlarmHistory()
+                        alarmHistory = emptyList()
+                    }) {
+                        Text("전체 삭제", fontSize = 12.sp, color = Color(0xFFE57373))
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            if (alarmHistory.isEmpty()) {
+                Text(
+                    "아직 알람이 울린 기록이 없습니다",
+                    color = Color.Gray, fontSize = 14.sp,
+                    modifier = Modifier.padding(vertical = 16.dp)
+                )
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    alarmHistory.forEach { item ->
+                        AlarmHistoryCard(item)
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
 
 @Composable
-fun KeywordChip(keyword: String, onDelete: () -> Unit) {
+fun KeywordChip(
+    keyword: String,
+    isEnabled: Boolean = true,
+    onToggle: (() -> Unit)? = null,
+    onDelete: () -> Unit
+) {
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
+            containerColor = if (isEnabled)
+                MaterialTheme.colorScheme.secondaryContainer
+            else
+                MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = keyword,
-                fontSize = 14.sp
+                fontSize = 14.sp,
+                color = if (isEnabled) MaterialTheme.colorScheme.onSecondaryContainer
+                        else Color.Gray
             )
-            Spacer(modifier = Modifier.width(8.dp))
-            IconButton(
-                onClick = onDelete,
-                modifier = Modifier.size(20.dp)
-            ) {
+            if (onToggle != null) {
+                Spacer(modifier = Modifier.width(4.dp))
+                Switch(
+                    checked = isEnabled,
+                    onCheckedChange = { onToggle() },
+                    modifier = Modifier.height(24.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(4.dp))
+            IconButton(onClick = onDelete, modifier = Modifier.size(20.dp)) {
                 Icon(
                     Icons.Default.Close,
                     contentDescription = "삭제",
                     modifier = Modifier.size(16.dp),
                     tint = Color.Gray
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun AlarmHistoryCard(item: AlarmHistoryItem) {
+    val sdf = remember { SimpleDateFormat("MM/dd HH:mm", Locale.KOREA) }
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "\"${item.keyword}\"",
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 14.sp
+                )
+                Text(
+                    text = item.appName,
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+            }
+            Text(
+                text = sdf.format(Date(item.timestamp)),
+                fontSize = 12.sp,
+                color = Color.Gray
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TimePickerDialog(
+    initialHour: Int,
+    initialMinute: Int,
+    onConfirm: (hour: Int, minute: Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val state = rememberTimePickerState(initialHour = initialHour, initialMinute = initialMinute, is24Hour = true)
+    Dialog(onDismissRequest = onDismiss) {
+        Card(shape = RoundedCornerShape(16.dp)) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("시간 선택", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Spacer(modifier = Modifier.height(16.dp))
+                TimePicker(state = state)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismiss) { Text("취소") }
+                    TextButton(onClick = { onConfirm(state.hour, state.minute) }) { Text("확인") }
+                }
             }
         }
     }
@@ -828,7 +1059,9 @@ fun AppKeywordDialog(
     currentKeywords: List<String>,
     onDismiss: () -> Unit,
     onAddKeyword: (String) -> Unit,
-    onRemoveKeyword: (String) -> Unit
+    onRemoveKeyword: (String) -> Unit,
+    isKeywordEnabled: (String) -> Boolean = { true },
+    onToggleKeyword: (String) -> Unit = {}
 ) {
     var newKeyword by remember { mutableStateOf("") }
     var keywords by remember { mutableStateOf(currentKeywords) }
@@ -905,6 +1138,8 @@ fun AppKeywordDialog(
                         keywords.forEach { keyword ->
                             KeywordChip(
                                 keyword = keyword,
+                                isEnabled = isKeywordEnabled(keyword),
+                                onToggle = { onToggleKeyword(keyword) },
                                 onDelete = {
                                     onRemoveKeyword(keyword)
                                     keywords = keywords - keyword
