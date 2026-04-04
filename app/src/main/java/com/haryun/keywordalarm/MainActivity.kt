@@ -2,6 +2,10 @@ package com.haryun.keywordalarm
 
 import android.content.Intent
 import android.graphics.drawable.Drawable
+import android.media.AudioAttributes
+import android.media.AudioManager
+import android.media.MediaPlayer
+import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
@@ -13,6 +17,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -25,6 +30,7 @@ import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -176,7 +182,7 @@ fun KeywordAlarmApp() {
                 .verticalScroll(rememberScrollState())
         ) {
             // 알림 접근 권한 카드
-            Card(
+            Card(ll
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
                     containerColor = if (hasNotificationAccess)
@@ -298,10 +304,28 @@ fun KeywordAlarmApp() {
                     if (isSoundEnabled) {
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        Text(
-                            text = "볼륨: ${volumeLevel.toInt()}%",
-                            fontSize = 14.sp
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "볼륨: ${volumeLevel.toInt()}%",
+                                fontSize = 14.sp
+                            )
+                            OutlinedButton(
+                                onClick = { playPreviewSound(context, volumeLevel.toInt(), customSoundUri) },
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.PlayArrow,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("미리 듣기", fontSize = 13.sp)
+                            }
+                        }
                         Slider(
                             value = volumeLevel,
                             onValueChange = { volumeLevel = it },
@@ -781,6 +805,45 @@ fun AppKeywordDialog(
                 }
             }
         }
+    }
+}
+
+// 볼륨 미리 듣기
+fun playPreviewSound(context: android.content.Context, volumePercent: Int, customSoundUri: String?) {
+    try {
+        val alarmUri = if (customSoundUri != null) {
+            Uri.parse(customSoundUri)
+        } else {
+            RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        }
+
+        val audioManager = context.getSystemService(android.content.Context.AUDIO_SERVICE) as AudioManager
+        val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
+        val targetVolume = (maxVolume * volumePercent / 100f).toInt().coerceIn(0, maxVolume)
+        audioManager.setStreamVolume(AudioManager.STREAM_ALARM, targetVolume, 0)
+
+        val mediaPlayer = MediaPlayer().apply {
+            setDataSource(context, alarmUri)
+            setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+            )
+            prepare()
+            start()
+            setOnCompletionListener { release() }
+        }
+
+        // 3초 후 강제 중지
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            if (mediaPlayer.isPlaying) mediaPlayer.stop()
+            mediaPlayer.release()
+        }, 3000)
+
+    } catch (e: Exception) {
+        android.util.Log.e("PreviewSound", "미리 듣기 실패: ${e.message}")
     }
 }
 
