@@ -985,14 +985,14 @@ fun startPreviewSound(
             }
         }
 
-        // 3초 후 강제 중지
+        // 30초 후 강제 중지
         handler.postDelayed({
             if (mediaPlayer.isPlaying) {
                 mediaPlayer.stop()
                 mediaPlayer.release()
                 onStop()
             }
-        }, 3000)
+        }, 30000)
 
         mediaPlayer
     } catch (e: Exception) {
