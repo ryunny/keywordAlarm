@@ -147,6 +147,9 @@ fun KeywordAlarmApp() {
     // 알림 이력
     var alarmHistory by remember { mutableStateOf(keywordRepository.getAlarmHistory()) }
 
+    // 테스트 알람 재생 중 여부
+    var isTestAlarmPlaying by remember { mutableStateOf(false) }
+
     // 시스템 알람음 다이얼로그
     var showSystemRingtoneDialog by remember { mutableStateOf(false) }
 
@@ -613,28 +616,38 @@ fun KeywordAlarmApp() {
                     // 테스트 알람 버튼
                     Button(
                         onClick = {
-                            triggerTestAlarm(
-                                context,
-                                isVibrationEnabled,
-                                selectedVibrationPattern,
-                                isSoundEnabled,
-                                volumeLevel.toInt(),
-                                customSoundUri,
-                                selectedAlarmRepeat
-                            )
+                            if (isTestAlarmPlaying) {
+                                com.haryun.keywordalarm.service.AlarmController.stop()
+                                isTestAlarmPlaying = false
+                            } else {
+                                isTestAlarmPlaying = true
+                                triggerTestAlarm(
+                                    context,
+                                    isVibrationEnabled,
+                                    selectedVibrationPattern,
+                                    isSoundEnabled,
+                                    volumeLevel.toInt(),
+                                    customSoundUri,
+                                    selectedAlarmRepeat,
+                                    onDone = { isTestAlarmPlaying = false }
+                                )
+                            }
                         },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.secondary
+                            containerColor = if (isTestAlarmPlaying)
+                                MaterialTheme.colorScheme.error
+                            else
+                                MaterialTheme.colorScheme.secondary
                         )
                     ) {
                         Icon(
-                            Icons.Default.Notifications,
+                            if (isTestAlarmPlaying) Icons.Default.Stop else Icons.Default.Notifications,
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("테스트 알람 울리기")
+                        Text(if (isTestAlarmPlaying) "알람 정지" else "테스트 알람 울리기")
                     }
                 }
             }
@@ -1491,7 +1504,8 @@ fun triggerTestAlarm(
     soundEnabled: Boolean,
     volumePercent: Int,
     customSoundUri: String?,
-    alarmRepeat: AlarmRepeat = AlarmRepeat.ONCE
+    alarmRepeat: AlarmRepeat = AlarmRepeat.ONCE,
+    onDone: () -> Unit = {}
 ) {
     // 화면 켜기
     val keywordRepository = KeywordRepository(context)
@@ -1530,7 +1544,10 @@ fun triggerTestAlarm(
         if (com.haryun.keywordalarm.service.AlarmController.isPlaying()) {
             com.haryun.keywordalarm.service.AlarmController.stop()
         }
-        startPreviewSound(context, volumePercent, customSoundUri) {}
+        startPreviewSound(context, volumePercent, customSoundUri, onStop = onDone)
+    } else {
+        // 소리 없으면 진동만 울리고 즉시 완료 콜백
+        onDone()
     }
 }
 
