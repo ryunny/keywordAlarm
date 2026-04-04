@@ -3,7 +3,9 @@ package com.haryun.keywordalarm.service
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.MediaPlayer
@@ -28,8 +30,11 @@ class KeywordNotificationListener : NotificationListenerService() {
 
     companion object {
         private const val TAG = "KeywordNotificationListener"
-        private const val CHANNEL_ID = "alarm_key_channel"
-        private const val NOTIFICATION_ID = 1001
+        const val CHANNEL_ID = "alarm_key_channel"
+        const val NOTIFICATION_ID = 1001
+        const val ACTION_STOP_ALARM = "com.haryun.keywordalarm.STOP_ALARM"
+
+        var instance: KeywordNotificationListener? = null
     }
 
     private lateinit var keywordRepository: KeywordRepository
@@ -40,6 +45,7 @@ class KeywordNotificationListener : NotificationListenerService() {
 
     override fun onCreate() {
         super.onCreate()
+        instance = this
         keywordRepository = KeywordRepository(applicationContext)
         createNotificationChannel()
         Log.d(TAG, "알림 리스너 서비스 시작됨")
@@ -195,25 +201,37 @@ class KeywordNotificationListener : NotificationListenerService() {
     }
 
     private fun showAlarmNotification(keyword: String, appName: String) {
+        val stopIntent = Intent(this, AlarmStopReceiver::class.java)
+        val stopPendingIntent = PendingIntent.getBroadcast(
+            this, 0, stopIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_lock_silent_mode_off)
             .setContentTitle("알람키 — 키워드 감지됨")
-            .setContentText("\"$keyword\" (${appName})")
+            .setContentText("\"$keyword\" ($appName)")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setAutoCancel(true)
+            .setOngoing(true)
+            .addAction(android.R.drawable.ic_media_pause, "정지", stopPendingIntent)
             .build()
 
         (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
             .notify(NOTIFICATION_ID, notification)
     }
 
+    fun stopAlarm() {
+        stopRunnable?.let { handler.removeCallbacks(it) }
+        mediaPlayer?.let { if (it.isPlaying) { it.stop(); it.release() } }
+        mediaPlayer = null
+    }
+
     override fun onDestroy() {
         super.onDestroy()
-        stopRunnable?.let { handler.removeCallbacks(it) }
-        mediaPlayer?.release()
-        mediaPlayer = null
+        stopAlarm()
+        instance = null
         Log.d(TAG, "알림 리스너 서비스 종료됨")
     }
 }

@@ -1,6 +1,8 @@
 package com.haryun.keywordalarm
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.media.AudioAttributes
 import android.media.AudioManager
@@ -36,6 +38,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -97,6 +100,19 @@ fun KeywordAlarmApp() {
 
     var isServiceEnabled by remember { mutableStateOf(keywordRepository.isServiceEnabled()) }
     var hasNotificationAccess by remember { mutableStateOf(isNotificationServiceEnabled(context)) }
+
+    // Android 13+ 알림 권한 요청
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { /* 결과 무시, 권한 거부해도 앱은 동작 */ }
+    LaunchedEffect(Unit) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
 
     // 설정 상태
     var isWakeScreenEnabled by remember { mutableStateOf(keywordRepository.isWakeScreenEnabled()) }

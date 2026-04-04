@@ -40,6 +40,11 @@
             </intent-filter>
         </activity>
 
+        <!-- 알람 정지 수신기 -->
+        <receiver
+            android:name=".service.AlarmStopReceiver"
+            android:exported="false" />
+
         <!-- 알림 리스너 서비스 -->
         <service
             android:name=".service.KeywordNotificationListener"
