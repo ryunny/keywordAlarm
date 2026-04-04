@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -95,6 +96,16 @@ fun KeywordAlarmApp() {
     var isSoundEnabled by remember { mutableStateOf(keywordRepository.isSoundEnabled()) }
     var volumeLevel by remember { mutableStateOf(keywordRepository.getVolumeLevel().toFloat()) }
     var customSoundUri by remember { mutableStateOf(keywordRepository.getCustomSoundUri()) }
+
+    // 미리 듣기 상태
+    var isPreviewPlaying by remember { mutableStateOf(false) }
+    val previewMediaPlayer = remember { mutableStateOf<MediaPlayer?>(null) }
+    DisposableEffect(Unit) {
+        onDispose {
+            previewMediaPlayer.value?.release()
+            previewMediaPlayer.value = null
+        }
+    }
 
     // 파일 선택기
     val soundPickerLauncher = rememberLauncherForActivityResult(
@@ -314,16 +325,30 @@ fun KeywordAlarmApp() {
                                 fontSize = 14.sp
                             )
                             OutlinedButton(
-                                onClick = { playPreviewSound(context, volumeLevel.toInt(), customSoundUri) },
+                                onClick = {
+                                    if (isPreviewPlaying) {
+                                        previewMediaPlayer.value?.stop()
+                                        previewMediaPlayer.value?.release()
+                                        previewMediaPlayer.value = null
+                                        isPreviewPlaying = false
+                                    } else {
+                                        previewMediaPlayer.value = startPreviewSound(
+                                            context, volumeLevel.toInt(), customSoundUri
+                                        ) {
+                                            isPreviewPlaying = false
+                                        }
+                                        isPreviewPlaying = true
+                                    }
+                                },
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
                             ) {
                                 Icon(
-                                    Icons.Default.PlayArrow,
+                                    if (isPreviewPlaying) Icons.Default.Stop else Icons.Default.PlayArrow,
                                     contentDescription = null,
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("미리 듣기", fontSize = 13.sp)
+                                Text(if (isPreviewPlaying) "정지" else "미리 듣기", fontSize = 13.sp)
                             }
                         }
                         Slider(
@@ -808,9 +833,14 @@ fun AppKeywordDialog(
     }
 }
 
-// 볼륨 미리 듣기
-fun playPreviewSound(context: android.content.Context, volumePercent: Int, customSoundUri: String?) {
-    try {
+// 볼륨 미리 듣기 — MediaPlayer 반환, 재생 종료 시 onStop 콜백 호출
+fun startPreviewSound(
+    context: android.content.Context,
+    volumePercent: Int,
+    customSoundUri: String?,
+    onStop: () -> Unit
+): MediaPlayer? {
+    return try {
         val alarmUri = if (customSoundUri != null) {
             Uri.parse(customSoundUri)
         } else {
@@ -823,6 +853,7 @@ fun playPreviewSound(context: android.content.Context, volumePercent: Int, custo
         val targetVolume = (maxVolume * volumePercent / 100f).toInt().coerceIn(0, maxVolume)
         audioManager.setStreamVolume(AudioManager.STREAM_ALARM, targetVolume, 0)
 
+        val handler = android.os.Handler(android.os.Looper.getMainLooper())
         val mediaPlayer = MediaPlayer().apply {
             setDataSource(context, alarmUri)
             setAudioAttributes(
@@ -833,17 +864,26 @@ fun playPreviewSound(context: android.content.Context, volumePercent: Int, custo
             )
             prepare()
             start()
-            setOnCompletionListener { release() }
+            setOnCompletionListener {
+                release()
+                onStop()
+            }
         }
 
         // 3초 후 강제 중지
-        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-            if (mediaPlayer.isPlaying) mediaPlayer.stop()
-            mediaPlayer.release()
+        handler.postDelayed({
+            if (mediaPlayer.isPlaying) {
+                mediaPlayer.stop()
+                mediaPlayer.release()
+                onStop()
+            }
         }, 3000)
 
+        mediaPlayer
     } catch (e: Exception) {
         android.util.Log.e("PreviewSound", "미리 듣기 실패: ${e.message}")
+        onStop()
+        null
     }
 }
 
