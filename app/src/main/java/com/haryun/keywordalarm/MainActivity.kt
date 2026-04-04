@@ -1493,8 +1493,11 @@ fun triggerTestAlarm(
         }
     }
 
-    // 소리
+    // 소리 (이미 울리는 중이면 먼저 정지 후 재생)
     if (soundEnabled) {
+        if (com.haryun.keywordalarm.service.AlarmController.isPlaying()) {
+            com.haryun.keywordalarm.service.AlarmController.stop()
+        }
         startPreviewSound(context, volumePercent, customSoundUri) {}
     }
 }
