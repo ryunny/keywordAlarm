@@ -1,6 +1,7 @@
 package com.haryun.keywordalarm
 
 import android.content.Intent
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
@@ -9,14 +10,19 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Refresh
@@ -24,14 +30,21 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.haryun.keywordalarm.data.AppInfo
+import com.haryun.keywordalarm.data.AppUtils
 import com.haryun.keywordalarm.data.KeywordRepository
 import com.haryun.keywordalarm.ui.theme.KeywordAlarmTheme
 
@@ -58,8 +71,16 @@ fun KeywordAlarmApp() {
     val context = LocalContext.current
     val keywordRepository = remember { KeywordRepository(context) }
 
-    var keywords by remember { mutableStateOf(keywordRepository.getKeywords()) }
-    var newKeyword by remember { mutableStateOf("") }
+    // 글로벌 키워드
+    var globalKeywords by remember { mutableStateOf(keywordRepository.getGlobalKeywords()) }
+    var newGlobalKeyword by remember { mutableStateOf("") }
+
+    // 앱별 키워드
+    var appKeywordsMap by remember { mutableStateOf(keywordRepository.getAllAppKeywords()) }
+    var showAppSelectDialog by remember { mutableStateOf(false) }
+    var selectedAppForKeyword by remember { mutableStateOf<AppInfo?>(null) }
+    var newAppKeyword by remember { mutableStateOf("") }
+
     var isServiceEnabled by remember { mutableStateOf(keywordRepository.isServiceEnabled()) }
     var hasNotificationAccess by remember { mutableStateOf(isNotificationServiceEnabled(context)) }
 
@@ -74,11 +95,14 @@ fun KeywordAlarmApp() {
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
-            // 영구 권한 요청
-            context.contentResolver.takePersistableUriPermission(
-                it,
-                Intent.FLAG_GRANT_READ_URI_PERMISSION
-            )
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    it,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (e: Exception) {
+                // 권한 부여 실패해도 진행
+            }
             customSoundUri = it.toString()
             keywordRepository.setCustomSoundUri(it.toString())
         }
@@ -96,6 +120,37 @@ fun KeywordAlarmApp() {
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
+    }
+
+    // 앱 선택 다이얼로그
+    if (showAppSelectDialog) {
+        AppSelectDialog(
+            onDismiss = { showAppSelectDialog = false },
+            onAppSelected = { appInfo ->
+                selectedAppForKeyword = appInfo
+                showAppSelectDialog = false
+            }
+        )
+    }
+
+    // 앱별 키워드 추가 다이얼로그
+    selectedAppForKeyword?.let { appInfo ->
+        AppKeywordDialog(
+            appInfo = appInfo,
+            currentKeywords = appKeywordsMap[appInfo.packageName] ?: emptyList(),
+            onDismiss = {
+                selectedAppForKeyword = null
+                newAppKeyword = ""
+            },
+            onAddKeyword = { keyword ->
+                keywordRepository.addAppKeyword(appInfo.packageName, keyword)
+                appKeywordsMap = keywordRepository.getAllAppKeywords()
+            },
+            onRemoveKeyword = { keyword ->
+                keywordRepository.removeAppKeyword(appInfo.packageName, keyword)
+                appKeywordsMap = keywordRepository.getAllAppKeywords()
+            }
+        )
     }
 
     Scaffold(
@@ -240,11 +295,9 @@ fun KeywordAlarmApp() {
                         )
                     }
 
-                    // 소리가 활성화된 경우에만 볼륨과 알람음 설정 표시
                     if (isSoundEnabled) {
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // 볼륨 조절
                         Text(
                             text = "볼륨: ${volumeLevel.toInt()}%",
                             fontSize = 14.sp
@@ -261,7 +314,6 @@ fun KeywordAlarmApp() {
 
                         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-                        // 알람음 선택
                         Text(
                             text = "알람음",
                             fontSize = 14.sp
@@ -320,11 +372,16 @@ fun KeywordAlarmApp() {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // ===== 키워드 관리 섹션 =====
+            // ===== 통합 키워드 섹션 =====
             Text(
-                text = "키워드 관리",
+                text = "통합 키워드",
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp
+            )
+            Text(
+                text = "모든 앱의 알림에 적용됩니다",
+                fontSize = 12.sp,
+                color = Color.Gray
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -334,18 +391,18 @@ fun KeywordAlarmApp() {
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 OutlinedTextField(
-                    value = newKeyword,
-                    onValueChange = { newKeyword = it },
+                    value = newGlobalKeyword,
+                    onValueChange = { newGlobalKeyword = it },
                     modifier = Modifier.weight(1f),
                     placeholder = { Text("키워드 입력") },
                     singleLine = true
                 )
                 Button(
                     onClick = {
-                        if (newKeyword.isNotBlank()) {
-                            keywordRepository.addKeyword(newKeyword)
-                            keywords = keywordRepository.getKeywords()
-                            newKeyword = ""
+                        if (newGlobalKeyword.isNotBlank()) {
+                            keywordRepository.addGlobalKeyword(newGlobalKeyword)
+                            globalKeywords = keywordRepository.getGlobalKeywords()
+                            newGlobalKeyword = ""
                         }
                     }
                 ) {
@@ -353,56 +410,91 @@ fun KeywordAlarmApp() {
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // 키워드 목록
-            if (keywords.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(32.dp),
-                    contentAlignment = Alignment.Center
+            // 글로벌 키워드 목록
+            if (globalKeywords.isEmpty()) {
+                Text(
+                    text = "등록된 통합 키워드가 없습니다",
+                    color = Color.Gray,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(vertical = 16.dp)
+                )
+            } else {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
+                    globalKeywords.forEach { keyword ->
+                        KeywordChip(
+                            keyword = keyword,
+                            onDelete = {
+                                keywordRepository.removeGlobalKeyword(keyword)
+                                globalKeywords = keywordRepository.getGlobalKeywords()
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // ===== 앱별 키워드 섹션 =====
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
                     Text(
-                        text = "등록된 키워드가 없습니다\n키워드를 추가해주세요",
-                        color = Color.Gray,
-                        fontSize = 14.sp
+                        text = "앱별 키워드",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                    Text(
+                        text = "특정 앱에만 적용됩니다",
+                        fontSize = 12.sp,
+                        color = Color.Gray
                     )
                 }
+                Button(
+                    onClick = { showAppSelectDialog = true }
+                ) {
+                    Icon(Icons.Default.Apps, contentDescription = null)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("앱 추가")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // 앱별 키워드 목록
+            if (appKeywordsMap.isEmpty()) {
+                Text(
+                    text = "등록된 앱별 키워드가 없습니다\n'앱 추가' 버튼을 눌러 설정하세요",
+                    color = Color.Gray,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(vertical = 16.dp)
+                )
             } else {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    keywords.forEach { keyword ->
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = keyword,
-                                    fontSize = 16.sp
+                    appKeywordsMap.forEach { (packageName, keywords) ->
+                        AppKeywordCard(
+                            packageName = packageName,
+                            keywords = keywords,
+                            onClick = {
+                                selectedAppForKeyword = AppInfo(
+                                    packageName = packageName,
+                                    appName = AppUtils.getAppName(context, packageName),
+                                    icon = AppUtils.getAppIcon(context, packageName)
                                 )
-                                IconButton(
-                                    onClick = {
-                                        keywordRepository.removeKeyword(keyword)
-                                        keywords = keywordRepository.getKeywords()
-                                    }
-                                ) {
-                                    Icon(
-                                        Icons.Default.Delete,
-                                        contentDescription = "삭제",
-                                        tint = Color(0xFFE57373)
-                                    )
-                                }
+                            },
+                            onDelete = {
+                                keywordRepository.clearAppKeywords(packageName)
+                                appKeywordsMap = keywordRepository.getAllAppKeywords()
                             }
-                        }
+                        )
                     }
                 }
             }
@@ -417,8 +509,277 @@ fun KeywordAlarmApp() {
                 modifier = Modifier.padding(vertical = 8.dp)
             )
 
-            // 하단 여백
             Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
+}
+
+@Composable
+fun KeywordChip(keyword: String, onDelete: () -> Unit) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = keyword,
+                fontSize = 14.sp
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            IconButton(
+                onClick = onDelete,
+                modifier = Modifier.size(20.dp)
+            ) {
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = "삭제",
+                    modifier = Modifier.size(16.dp),
+                    tint = Color.Gray
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun AppKeywordCard(
+    packageName: String,
+    keywords: List<String>,
+    onClick: () -> Unit,
+    onDelete: () -> Unit
+) {
+    val context = LocalContext.current
+    val appName = remember { AppUtils.getAppName(context, packageName) }
+    val appIcon = remember { AppUtils.getAppIcon(context, packageName) }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 앱 아이콘
+            appIcon?.let { drawable ->
+                Image(
+                    bitmap = drawable.toBitmap(48, 48).asImageBitmap(),
+                    contentDescription = appName,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                )
+            } ?: Icon(
+                Icons.Default.Apps,
+                contentDescription = null,
+                modifier = Modifier.size(40.dp)
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = appName,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 14.sp
+                )
+                Text(
+                    text = keywords.joinToString(", "),
+                    fontSize = 12.sp,
+                    color = Color.Gray,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            IconButton(onClick = onDelete) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = "삭제",
+                    tint = Color(0xFFE57373)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun AppSelectDialog(
+    onDismiss: () -> Unit,
+    onAppSelected: (AppInfo) -> Unit
+) {
+    val context = LocalContext.current
+    val installedApps = remember { AppUtils.getInstalledApps(context) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.7f),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column {
+                Text(
+                    text = "앱 선택",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    modifier = Modifier.padding(16.dp)
+                )
+
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(installedApps) { appInfo ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onAppSelected(appInfo) }
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            appInfo.icon?.let { drawable ->
+                                Image(
+                                    bitmap = drawable.toBitmap(48, 48).asImageBitmap(),
+                                    contentDescription = appInfo.appName,
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(CircleShape)
+                                )
+                            } ?: Icon(
+                                Icons.Default.Apps,
+                                contentDescription = null,
+                                modifier = Modifier.size(40.dp)
+                            )
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Text(
+                                text = appInfo.appName,
+                                fontSize = 14.sp
+                            )
+                        }
+                        HorizontalDivider()
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AppKeywordDialog(
+    appInfo: AppInfo,
+    currentKeywords: List<String>,
+    onDismiss: () -> Unit,
+    onAddKeyword: (String) -> Unit,
+    onRemoveKeyword: (String) -> Unit
+) {
+    var newKeyword by remember { mutableStateOf("") }
+    var keywords by remember { mutableStateOf(currentKeywords) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                // 헤더
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    appInfo.icon?.let { drawable ->
+                        Image(
+                            bitmap = drawable.toBitmap(48, 48).asImageBitmap(),
+                            contentDescription = appInfo.appName,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = appInfo.appName,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 키워드 입력
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = newKeyword,
+                        onValueChange = { newKeyword = it },
+                        modifier = Modifier.weight(1f),
+                        placeholder = { Text("키워드 입력") },
+                        singleLine = true
+                    )
+                    Button(
+                        onClick = {
+                            if (newKeyword.isNotBlank()) {
+                                onAddKeyword(newKeyword)
+                                keywords = keywords + newKeyword
+                                newKeyword = ""
+                            }
+                        }
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "추가")
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 키워드 목록
+                if (keywords.isEmpty()) {
+                    Text(
+                        text = "키워드를 추가해주세요",
+                        color = Color.Gray,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                } else {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        keywords.forEach { keyword ->
+                            KeywordChip(
+                                keyword = keyword,
+                                onDelete = {
+                                    onRemoveKeyword(keyword)
+                                    keywords = keywords - keyword
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 닫기 버튼
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("닫기")
+                    }
+                }
+            }
         }
     }
 }
