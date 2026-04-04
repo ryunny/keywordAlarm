@@ -44,7 +44,7 @@
         <!-- AdMob 앱 ID (테스트용 — 출시 전 실제 ID로 교체 필요) -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
+            android:value="ca-app-pub-7340199690245957~6205030477" />
 
         <!-- 알람 정지 수신기 -->
         <receiver

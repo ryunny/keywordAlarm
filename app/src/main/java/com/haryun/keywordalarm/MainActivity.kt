@@ -1509,7 +1509,7 @@ fun BannerAdView() {
         factory = {
             com.google.android.gms.ads.AdView(context).apply {
                 setAdSize(com.google.android.gms.ads.AdSize.BANNER)
-                adUnitId = "ca-app-pub-3940256099942544/6300978111" // 테스트 ID
+                adUnitId = "ca-app-pub-7340199690245957/1967131510"
                 loadAd(com.google.android.gms.ads.AdRequest.Builder().build())
             }
         },
