@@ -50,7 +50,6 @@ class KeywordNotificationListener : NotificationListenerService() {
         instance = this
         keywordRepository = KeywordRepository(applicationContext)
         createNotificationChannel()
-        updateStatusNotification()
         Log.d(TAG, "알림 리스너 서비스 시작됨")
     }
 
@@ -140,9 +139,12 @@ class KeywordNotificationListener : NotificationListenerService() {
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {}
 
     private fun triggerAlarm(keyword: String, appName: String) {
+        // 알람 배너는 항상 표시
+        showAlarmNotification(keyword, appName)
+
+        // 화면 켜기는 설정된 경우에만
         if (keywordRepository.isWakeScreenEnabled()) {
             wakeScreen()
-            showAlarmNotification(keyword, appName)
         }
         if (keywordRepository.isVibrationEnabled()) vibrate()
         if (keywordRepository.isSoundEnabled() && !AlarmController.isPlaying()) {
