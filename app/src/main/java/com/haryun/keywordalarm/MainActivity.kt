@@ -182,7 +182,7 @@ fun KeywordAlarmApp() {
                 .verticalScroll(rememberScrollState())
         ) {
             // 알림 접근 권한 카드
-            Card(ll
+            Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
                     containerColor = if (hasNotificationAccess)
