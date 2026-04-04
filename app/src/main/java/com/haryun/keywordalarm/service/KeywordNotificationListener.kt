@@ -15,6 +15,7 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
 import com.haryun.keywordalarm.data.KeywordRepository
+import com.haryun.keywordalarm.data.VibrationPattern
 
 class KeywordNotificationListener : NotificationListenerService() {
 
@@ -84,8 +85,12 @@ class KeywordNotificationListener : NotificationListenerService() {
             getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
 
-        // 진동 패턴: 0ms 대기, 500ms 진동, 200ms 대기, 500ms 진동
-        val pattern = longArrayOf(0, 500, 200, 500, 200, 500)
+        val patternName = keywordRepository.getVibrationPattern()
+        val pattern = try {
+            VibrationPattern.valueOf(patternName).pattern
+        } catch (e: Exception) {
+            VibrationPattern.DEFAULT.pattern
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))

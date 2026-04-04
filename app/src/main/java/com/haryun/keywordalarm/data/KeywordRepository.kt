@@ -13,6 +13,7 @@ class KeywordRepository(private val context: Context) {
         private const val KEY_APP_KEYWORDS = "app_keywords"
         private const val KEY_SERVICE_ENABLED = "service_enabled"
         private const val KEY_VIBRATION_ENABLED = "vibration_enabled"
+        private const val KEY_VIBRATION_PATTERN = "vibration_pattern"
         private const val KEY_SOUND_ENABLED = "sound_enabled"
         private const val KEY_VOLUME_LEVEL = "volume_level"
         private const val KEY_CUSTOM_SOUND_URI = "custom_sound_uri"
@@ -206,6 +207,14 @@ class KeywordRepository(private val context: Context) {
         prefs.edit().putBoolean(KEY_VIBRATION_ENABLED, enabled).apply()
     }
 
+    fun getVibrationPattern(): String {
+        return prefs.getString(KEY_VIBRATION_PATTERN, VibrationPattern.DEFAULT.name) ?: VibrationPattern.DEFAULT.name
+    }
+
+    fun setVibrationPattern(pattern: VibrationPattern) {
+        prefs.edit().putString(KEY_VIBRATION_PATTERN, pattern.name).apply()
+    }
+
     // ===== 소리 설정 =====
 
     fun isSoundEnabled(): Boolean {
@@ -239,4 +248,12 @@ class KeywordRepository(private val context: Context) {
     fun clearCustomSoundUri() {
         prefs.edit().remove(KEY_CUSTOM_SOUND_URI).apply()
     }
+}
+
+enum class VibrationPattern(val label: String, val pattern: LongArray) {
+    DEFAULT("기본 (짧게 3번)", longArrayOf(0, 200, 100, 200, 100, 200)),
+    LONG("긴 진동 (1번)", longArrayOf(0, 1000)),
+    ESCALATE("점점 강하게", longArrayOf(0, 100, 100, 300, 100, 600)),
+    RAPID("빠른 연속 (5번)", longArrayOf(0, 80, 60, 80, 60, 80, 60, 80, 60, 80)),
+    SOS("SOS", longArrayOf(0, 100, 80, 100, 80, 100, 200, 300, 200, 300, 200, 300, 200, 100, 80, 100, 80, 100))
 }

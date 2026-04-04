@@ -53,6 +53,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.haryun.keywordalarm.data.AppInfo
 import com.haryun.keywordalarm.data.AppUtils
 import com.haryun.keywordalarm.data.KeywordRepository
+import com.haryun.keywordalarm.data.VibrationPattern
 import com.haryun.keywordalarm.ui.theme.KeywordAlarmTheme
 
 class MainActivity : ComponentActivity() {
@@ -93,6 +94,12 @@ fun KeywordAlarmApp() {
 
     // 설정 상태
     var isVibrationEnabled by remember { mutableStateOf(keywordRepository.isVibrationEnabled()) }
+    var selectedVibrationPattern by remember {
+        mutableStateOf(
+            try { VibrationPattern.valueOf(keywordRepository.getVibrationPattern()) }
+            catch (e: Exception) { VibrationPattern.DEFAULT }
+        )
+    }
     var isSoundEnabled by remember { mutableStateOf(keywordRepository.isSoundEnabled()) }
     var volumeLevel by remember { mutableStateOf(keywordRepository.getVolumeLevel().toFloat()) }
     var customSoundUri by remember { mutableStateOf(keywordRepository.getCustomSoundUri()) }
@@ -308,6 +315,35 @@ fun KeywordAlarmApp() {
                                 keywordRepository.setVibrationEnabled(enabled)
                             }
                         )
+                    }
+
+                    if (isVibrationEnabled) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("진동 패턴", fontSize = 14.sp)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            VibrationPattern.entries.forEach { pattern ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            selectedVibrationPattern = pattern
+                                            keywordRepository.setVibrationPattern(pattern)
+                                        }
+                                        .padding(vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    RadioButton(
+                                        selected = selectedVibrationPattern == pattern,
+                                        onClick = {
+                                            selectedVibrationPattern = pattern
+                                            keywordRepository.setVibrationPattern(pattern)
+                                        }
+                                    )
+                                    Text(pattern.label, fontSize = 14.sp)
+                                }
+                            }
+                        }
                     }
 
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
