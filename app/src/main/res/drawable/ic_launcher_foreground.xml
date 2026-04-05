@@ -7,36 +7,36 @@
     <!-- Bell handle -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M50,16 Q54,12 58,16 L58,26 L50,26 Z" />
+        android:pathData="M51,22 Q54,18 57,22 L57,30 L51,30 Z" />
 
-    <!-- Bell body (Material Design 'notifications' style) -->
+    <!-- Bell body (smaller, centered) -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54,26 C36,26 24,40 24,56 L24,64 Q24,70 30,70 L78,70 Q84,70 84,64 L84,56 C84,40 72,26 54,26 Z" />
+        android:pathData="M54,30 C40,30 32,42 32,54 L32,62 Q32,67 37,67 L71,67 Q76,67 76,62 L76,54 C76,42 68,30 54,30 Z" />
 
-    <!-- Bell rim (bottom dark overlay for depth) -->
+    <!-- Bell rim depth -->
     <path
         android:fillColor="#000000"
         android:fillAlpha="0.08"
-        android:pathData="M24,64 Q24,70 30,70 L78,70 Q84,70 84,64 L84,60 L24,60 Z" />
+        android:pathData="M32,62 Q32,67 37,67 L71,67 Q76,67 76,62 L76,58 L32,58 Z" />
 
     <!-- Bell clapper -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M61,70 A7,7 0 1,1 47,70 A7,7 0 1,1 61,70 Z" />
+        android:pathData="M59,67 A5,5 0 1,1 49,67 A5,5 0 1,1 59,67 Z" />
 
-    <!-- Orange accent dot (top right badge) -->
+    <!-- Orange K badge -->
     <path
         android:fillColor="#FF6D00"
-        android:pathData="M80,28 A12,12 0 1,1 56,28 A12,12 0 1,1 80,28 Z" />
+        android:pathData="M78,28 A10,10 0 1,1 58,28 A10,10 0 1,1 78,28 Z" />
 
-    <!-- K letter in badge -->
+    <!-- K letter -->
     <path
         android:strokeColor="#FFFFFF"
-        android:strokeWidth="2.5"
+        android:strokeWidth="2.2"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
         android:fillColor="#00000000"
-        android:pathData="M64,22 L64,34 M64,28 L70,22 M64,28 L70,34" />
+        android:pathData="M64,23 L64,33 M64,28 L69,23 M64,28 L69,33" />
 
 </vector>
