@@ -106,6 +106,9 @@ class KeywordNotificationListener : NotificationListenerService() {
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         sbn ?: return
 
+        // 자기 자신의 알림은 무시 (알람 알림이 재귀 트리거되는 것 방지)
+        if (sbn.packageName == applicationContext.packageName) return
+
         val extras = sbn.notification.extras
         val title = extras.getString(Notification.EXTRA_TITLE) ?: ""
         val text = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
@@ -166,7 +169,9 @@ class KeywordNotificationListener : NotificationListenerService() {
 
         vibrator.cancel() // 이전 진동 취소 후 새로 시작
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
+            // amplitude를 명시해야 Samsung 등에서 자체 패턴으로 대체하지 않음
+            val amplitudes = IntArray(pattern.size) { i -> if (i % 2 == 0) 0 else 255 }
+            vibrator.vibrate(VibrationEffect.createWaveform(pattern, amplitudes, -1))
         } else {
             @Suppress("DEPRECATION")
             vibrator.vibrate(pattern, -1)

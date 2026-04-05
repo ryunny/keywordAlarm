@@ -1617,7 +1617,9 @@ fun triggerTestAlarm(
         }
         vibrator.cancel() // 이전 진동 취소 후 새로 시작
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            vibrator.vibrate(android.os.VibrationEffect.createWaveform(vibrationPattern.pattern, -1))
+            val p = vibrationPattern.pattern
+            val amplitudes = IntArray(p.size) { i -> if (i % 2 == 0) 0 else 255 }
+            vibrator.vibrate(android.os.VibrationEffect.createWaveform(p, amplitudes, -1))
         } else {
             @Suppress("DEPRECATION")
             vibrator.vibrate(vibrationPattern.pattern, -1)
