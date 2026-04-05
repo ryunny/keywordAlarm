@@ -1320,11 +1320,21 @@ fun AppKeywordCard(
 @Composable
 fun AppSelectDialog(onDismiss: () -> Unit, onAppSelected: (AppInfo) -> Unit) {
     val context = LocalContext.current
-    val installedApps = remember { AppUtils.getInstalledApps(context) }
+    var installedApps by remember { mutableStateOf<List<AppInfo>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
     var searchQuery by remember { mutableStateOf("") }
-    val filteredApps = remember(searchQuery) {
+    val filteredApps = remember(searchQuery, installedApps) {
         if (searchQuery.isBlank()) installedApps
         else installedApps.filter { it.appName.contains(searchQuery, ignoreCase = true) }
+    }
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            val apps = AppUtils.getInstalledApps(context)
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                installedApps = apps
+                isLoading = false
+            }
+        }
     }
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -1359,7 +1369,11 @@ fun AppSelectDialog(onDismiss: () -> Unit, onAppSelected: (AppInfo) -> Unit) {
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFEEEEEE))
-                if (filteredApps.isEmpty()) {
+                if (isLoading) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = PrimaryIndigo, modifier = Modifier.size(36.dp))
+                    }
+                } else if (filteredApps.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text("검색 결과가 없습니다", color = TextSecondary, fontSize = 13.sp)
                     }
