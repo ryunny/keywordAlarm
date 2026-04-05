@@ -1601,6 +1601,11 @@ fun triggerTestAlarm(
     }
 }
 
+// 출시 전: 아래 TEST_AD_UNIT_ID → REAL_AD_UNIT_ID 로 교체
+private const val TEST_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111"  // Google 공식 테스트 ID
+private const val REAL_AD_UNIT_ID = "ca-app-pub-7340199690245957/1967131510"  // 실제 광고 ID
+private const val IS_TEST_MODE = true  // 출시 시 false 로 변경
+
 @Composable
 fun BannerAdView() {
     val context = LocalContext.current
@@ -1608,11 +1613,13 @@ fun BannerAdView() {
         factory = {
             com.google.android.gms.ads.AdView(context).apply {
                 setAdSize(com.google.android.gms.ads.AdSize.BANNER)
-                adUnitId = "ca-app-pub-7340199690245957/1967131510"
+                adUnitId = if (IS_TEST_MODE) TEST_AD_UNIT_ID else REAL_AD_UNIT_ID
                 loadAd(com.google.android.gms.ads.AdRequest.Builder().build())
             }
         },
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 50.dp)  // 광고 미로딩 시에도 최소 높이 유지
     )
 }
 
