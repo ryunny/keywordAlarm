@@ -308,7 +308,13 @@ fun KeywordAlarmApp() {
             )
         },
         bottomBar = {
-            BannerAdView()
+            Column(
+                modifier = Modifier.windowInsetsPadding(
+                    androidx.compose.foundation.layout.WindowInsets.navigationBars
+                )
+            ) {
+                BannerAdView()
+            }
         }
     ) { paddingValues ->
         Column(
