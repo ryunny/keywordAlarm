@@ -28,7 +28,7 @@ class KeywordRepository(private val context: Context) {
         private const val KEY_SCHEDULE_END_HOUR = "schedule_end_hour"
         private const val KEY_SCHEDULE_END_MINUTE = "schedule_end_minute"
         private const val KEY_ALARM_HISTORY = "alarm_history"
-        private const val MAX_HISTORY = 10
+        private const val MAX_HISTORY = 50
         private const val HISTORY_24H_MS = 24 * 60 * 60 * 1000L
     }
 

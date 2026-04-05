@@ -13,7 +13,7 @@ object AlarmController {
 
     fun stop() {
         currentPlayer?.let {
-            try { if (it.isPlaying) it.stop(); it.release() } catch (e: Exception) {}
+            try { if (it.isPlaying) { it.stop(); it.release() } } catch (e: Exception) {}
         }
         currentPlayer = null
         KeywordNotificationListener.instance?.stopAlarm()

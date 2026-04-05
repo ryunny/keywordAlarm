@@ -1604,7 +1604,7 @@ fun triggerTestAlarm(
 // 출시 전: 아래 TEST_AD_UNIT_ID → REAL_AD_UNIT_ID 로 교체
 private const val TEST_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111"  // Google 공식 테스트 ID
 private const val REAL_AD_UNIT_ID = "ca-app-pub-7340199690245957/1967131510"  // 실제 광고 ID
-private const val IS_TEST_MODE = true  // 출시 시 false 로 변경
+private const val IS_TEST_MODE = false  // 실제 광고 ID 사용
 
 @Composable
 fun BannerAdView() {
