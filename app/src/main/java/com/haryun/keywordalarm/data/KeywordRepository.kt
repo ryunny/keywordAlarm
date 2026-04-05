@@ -399,9 +399,9 @@ enum class AlarmRepeat(val label: String) {
 }
 
 enum class VibrationPattern(val label: String, val pattern: LongArray) {
-    DEFAULT("기본 (짧게 3번)", longArrayOf(0, 200, 100, 200, 100, 200)),
-    LONG("긴 진동 (1번)", longArrayOf(0, 1000)),
-    ESCALATE("점점 강하게", longArrayOf(0, 100, 100, 300, 100, 600)),
-    RAPID("빠른 연속 (5번)", longArrayOf(0, 80, 60, 80, 60, 80, 60, 80, 60, 80)),
-    SOS("SOS", longArrayOf(0, 100, 80, 100, 80, 100, 200, 300, 200, 300, 200, 300, 200, 100, 80, 100, 80, 100))
+    DEFAULT("기본 (짧게 3번)", longArrayOf(0, 300, 150, 300, 150, 300)),
+    LONG("긴 진동 (1번)", longArrayOf(0, 2000)),
+    ESCALATE("점점 강하게", longArrayOf(0, 150, 200, 500, 200, 1000)),
+    RAPID("빠른 연속 (7번)", longArrayOf(0, 60, 50, 60, 50, 60, 50, 60, 50, 60, 50, 60, 50, 60)),
+    SOS("SOS", longArrayOf(0, 150, 100, 150, 100, 150, 400, 500, 300, 500, 300, 500, 400, 150, 100, 150, 100, 150))
 }
