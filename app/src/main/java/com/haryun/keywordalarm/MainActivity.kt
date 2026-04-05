@@ -524,34 +524,56 @@ fun KeywordAlarmApp() {
                         )
 
                         if (isVibrationEnabled) {
-                            Column(
+                            var showVibrationPatterns by remember { mutableStateOf(false) }
+                            Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(start = 56.dp, end = 16.dp, bottom = 12.dp)
+                                    .clickable { showVibrationPatterns = !showVibrationPatterns }
+                                    .padding(start = 56.dp, end = 16.dp, top = 4.dp, bottom = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text(stringResource(R.string.setting_vibration_pattern), fontSize = 13.sp, color = TextSecondary)
-                                Spacer(modifier = Modifier.height(6.dp))
-                                VibrationPattern.entries.forEach { pattern ->
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .clickable {
-                                                selectedVibrationPattern = pattern
-                                                keywordRepository.setVibrationPattern(pattern)
-                                            }
-                                            .padding(vertical = 6.dp, horizontal = 4.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        RadioButton(
-                                            selected = selectedVibrationPattern == pattern,
-                                            onClick = {
-                                                selectedVibrationPattern = pattern
-                                                keywordRepository.setVibrationPattern(pattern)
-                                            },
-                                            colors = RadioButtonDefaults.colors(selectedColor = PrimaryIndigo)
-                                        )
-                                        Text(stringResource(pattern.labelRes()), fontSize = 14.sp)
+                                Text(
+                                    stringResource(R.string.setting_vibration_pattern) + ": " + stringResource(selectedVibrationPattern.labelRes()),
+                                    fontSize = 13.sp, color = TextSecondary
+                                )
+                                Icon(
+                                    if (showVibrationPatterns) Icons.Default.Close else Icons.Default.Settings,
+                                    contentDescription = null,
+                                    tint = TextSecondary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                            if (showVibrationPatterns) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(start = 56.dp, end = 16.dp, bottom = 12.dp)
+                                ) {
+                                    VibrationPattern.entries.forEach { pattern ->
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .clickable {
+                                                    selectedVibrationPattern = pattern
+                                                    keywordRepository.setVibrationPattern(pattern)
+                                                    showVibrationPatterns = false
+                                                }
+                                                .padding(vertical = 6.dp, horizontal = 4.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            RadioButton(
+                                                selected = selectedVibrationPattern == pattern,
+                                                onClick = {
+                                                    selectedVibrationPattern = pattern
+                                                    keywordRepository.setVibrationPattern(pattern)
+                                                    showVibrationPatterns = false
+                                                },
+                                                colors = RadioButtonDefaults.colors(selectedColor = PrimaryIndigo)
+                                            )
+                                            Text(stringResource(pattern.labelRes()), fontSize = 14.sp)
+                                        }
                                     }
                                 }
                             }
