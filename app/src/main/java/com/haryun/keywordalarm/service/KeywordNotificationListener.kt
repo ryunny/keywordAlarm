@@ -265,15 +265,23 @@ class KeywordNotificationListener : NotificationListenerService() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
+        // 전체화면 Activity (잠금화면에서 바로 정지 가능)
+        val fullScreenIntent = AlarmFullScreenActivity.createIntent(this, keyword, appName)
+        val fullScreenPendingIntent = PendingIntent.getActivity(
+            this, 0, fullScreenIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_lock_silent_mode_off)
             .setContentTitle("알람키 — 키워드 감지됨")
             .setContentText("\"$keyword\" ($appName)")
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setOngoing(true)
-            .setDeleteIntent(stopPendingIntent) // 알림 스와이프로 지울 때도 알람 정지
+            .setDeleteIntent(stopPendingIntent)
+            .setFullScreenIntent(fullScreenPendingIntent, true) // 잠금화면/사용 중 전체화면으로 표시
             .addAction(android.R.drawable.ic_media_pause, "정지", stopPendingIntent)
             .build()
 

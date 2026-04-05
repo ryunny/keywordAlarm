@@ -2,4 +2,9 @@
 <resources>
 
     <style name="Theme.KeywordAlarm" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.KeywordAlarm.FullScreen" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowFullscreen">true</item>
+    </style>
 </resources>

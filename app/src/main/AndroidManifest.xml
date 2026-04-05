@@ -46,6 +46,16 @@
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-7340199690245957~6205030477" />
 
+        <!-- 알람 전체화면 Activity (잠금화면 위에 표시) -->
+        <activity
+            android:name=".service.AlarmFullScreenActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:showOnLockScreen="true"
+            android:turnScreenOn="true"
+            android:excludeFromRecents="true"
+            android:theme="@style/Theme.KeywordAlarm" />
+
         <!-- 알람 정지 수신기 -->
         <receiver
             android:name=".service.AlarmStopReceiver"
