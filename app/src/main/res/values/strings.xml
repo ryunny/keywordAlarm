@@ -1,3 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">알람키</string>
+
+    <!-- 상태 -->
+    <string name="status_active">감지 중</string>
+    <string name="status_inactive">비활성화됨</string>
+    <string name="status_desc_active">알림을 감지하고 있습니다</string>
+    <string name="status_desc_inactive">켜기를 눌러 활성화하세요</string>
+    <string name="hero_title">키워드 알람</string>
+
+    <!-- 버튼 -->
+    <string name="btn_test_alarm">테스트 알람</string>
+    <string name="btn_stop_alarm">알람 정지</string>
+    <string name="btn_stop">정지</string>
+    <string name="btn_settings">설정</string>
+    <string name="btn_add_app">앱 추가</string>
+    <string name="btn_preview">미리 듣기</string>
+    <string name="btn_system_ringtone">시스템 알람음</string>
+    <string name="btn_my_files">내 파일</string>
+    <string name="btn_reset_sound">기본 알람음으로 초기화</string>
+    <string name="btn_clear_all">전체 삭제</string>
+    <string name="btn_close">닫기</string>
+    <string name="btn_cancel">취소</string>
+    <string name="btn_confirm">확인</string>
+    <string name="btn_on">켜기</string>
+    <string name="btn_off">끄기</string>
+
+    <!-- 알람 배너 -->
+    <string name="alarm_active_banner">알람이 울리는 중</string>
+
+    <!-- 권한 -->
+    <string name="permission_title">알림 접근 권한 필요</string>
+    <string name="permission_desc">키워드를 감지하려면 권한이 필요합니다</string>
+
+    <!-- 섹션 헤더 -->
+    <string name="section_alarm_settings">알람 설정</string>
+    <string name="section_schedule">시간대 설정</string>
+    <string name="section_schedule_desc">설정한 시간에만 알람이 울립니다</string>
+    <string name="section_global_keywords">통합 키워드</string>
+    <string name="section_global_keywords_desc">모든 앱의 알림에 적용됩니다</string>
+    <string name="section_exclusion_keywords">제외 키워드</string>
+    <string name="section_exclusion_keywords_desc">이 단어가 포함된 알림은 무시합니다</string>
+    <string name="section_app_keywords">앱별 키워드</string>
+    <string name="section_app_keywords_desc">특정 앱에만 적용됩니다</string>
+
+    <!-- 설정 항목 -->
+    <string name="setting_vibration">진동</string>
+    <string name="setting_vibration_pattern">진동 패턴</string>
+    <string name="setting_sound">소리</string>
+    <string name="setting_volume">볼륨 %d%%</string>
+    <string name="setting_alarm_sound">알람음</string>
+    <string name="setting_alarm_repeat">알람 반복</string>
+    <string name="setting_wake_screen">화면 켜기</string>
+    <string name="setting_wake_screen_desc">알람 시 잠금화면 위에 알림 표시</string>
+    <string name="setting_schedule_enabled">시간대 제한 사용</string>
+
+    <!-- 시간 -->
+    <string name="label_start">시작</string>
+    <string name="label_end">종료</string>
+    <string name="dialog_select_time">시간 선택</string>
+
+    <!-- 키워드 -->
+    <string name="hint_keyword">키워드 입력</string>
+    <string name="hint_exclusion">예: 광고, 이벤트</string>
+    <string name="empty_global_keywords">등록된 통합 키워드가 없습니다</string>
+    <string name="empty_exclusion_keywords">등록된 제외 키워드가 없습니다</string>
+    <string name="empty_app_keywords">등록된 앱별 키워드가 없습니다\n\'앱 추가\' 버튼을 눌러 설정하세요</string>
+    <string name="hint_add_keyword">키워드를 추가해주세요</string>
+    <string name="dialog_select_app">앱 선택</string>
+
+    <!-- 알림 이력 -->
+    <string name="section_history">알림 이력</string>
+    <string name="history_empty">최근 24시간 기록 없음</string>
+    <string name="history_count">최근 24시간 %d건</string>
+    <string name="history_period">최근 24시간</string>
+    <string name="history_empty_detail">최근 24시간 내 알람 기록이 없습니다</string>
+
+    <!-- 알람음 -->
+    <string name="dialog_select_ringtone">알람음 선택</string>
+    <string name="default_alarm_sound">기본 알람음 (시스템)</string>
+    <string name="custom_alarm_sound">커스텀 알람음</string>
+    <string name="sound_inaccessible">⚠ 파일에 접근할 수 없습니다. 다시 선택해주세요.</string>
+
+    <!-- 푸터 -->
+    <string name="footer_desc">등록한 키워드가 알림에 포함되면 무음 모드에서도 알람이 울립니다</string>
+
+    <!-- 알림(Notification) -->
+    <string name="notif_channel_alarm_name">알람키 알림</string>
+    <string name="notif_channel_alarm_desc">키워드 매칭 시 표시되는 알림</string>
+    <string name="notif_channel_status_name">알람키 상태</string>
+    <string name="notif_channel_status_desc">알람키 실행 상태</string>
+    <string name="notif_status_active">키워드 감지 중</string>
+    <string name="notif_alarm_title">알람키 — 키워드 감지됨</string>
+    <string name="notif_alarm_content">\"%1$s\" (%2$s)</string>
+
+    <!-- 전체화면 알람 -->
+    <string name="alarm_screen_subtitle">알람키 — 키워드 감지됨</string>
+    <string name="alarm_stop_hint">버튼을 탭하면 알람이 정지됩니다</string>
+
+    <!-- 진동 패턴 -->
+    <string name="vibration_default">기본 (짧게 3번)</string>
+    <string name="vibration_long">긴 진동 (1번)</string>
+    <string name="vibration_escalate">점점 강하게</string>
+    <string name="vibration_rapid">빠른 연속 (7번)</string>
+    <string name="vibration_sos">SOS</string>
+
+    <!-- 알람 반복 -->
+    <string name="alarm_repeat_once">1번만</string>
+    <string name="alarm_repeat_three">3번 반복</string>
+    <string name="alarm_repeat_loop">계속 반복 (2분)</string>
+
+    <!-- 테스트 -->
+    <string name="test_keyword">테스트 키워드</string>
 </resources>

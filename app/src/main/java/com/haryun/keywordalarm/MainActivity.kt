@@ -73,6 +73,7 @@ import com.haryun.keywordalarm.data.VibrationPattern
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.ui.res.stringResource
 import com.haryun.keywordalarm.ui.theme.KeywordAlarmTheme
 
 // 디자인 색상 상수
@@ -283,7 +284,7 @@ fun KeywordAlarmApp() {
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            "알람키",
+                            stringResource(R.string.app_name),
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
                             fontSize = 20.sp
@@ -327,7 +328,7 @@ fun KeywordAlarmApp() {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Notifications, null, tint = Color.White, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("알람이 울리는 중", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        Text(stringResource(R.string.alarm_active_banner), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                     }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -338,7 +339,7 @@ fun KeywordAlarmApp() {
                     ) {
                         Icon(Icons.Default.Stop, null, tint = Color.White, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("정지", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        Text(stringResource(R.string.btn_stop), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     }
                 }
             }
@@ -364,8 +365,8 @@ fun KeywordAlarmApp() {
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("알림 접근 권한 필요", fontWeight = FontWeight.Bold, color = AlarmRed, fontSize = 14.sp)
-                                Text("키워드를 감지하려면 권한이 필요합니다", fontSize = 12.sp, color = TextSecondary)
+                                Text(stringResource(R.string.permission_title), fontWeight = FontWeight.Bold, color = AlarmRed, fontSize = 14.sp)
+                                Text(stringResource(R.string.permission_desc), fontSize = 12.sp, color = TextSecondary)
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             FilledTonalButton(
@@ -373,7 +374,7 @@ fun KeywordAlarmApp() {
                                 colors = ButtonDefaults.filledTonalButtonColors(containerColor = AlarmRed),
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                             ) {
-                                Text("설정", color = Color.White, fontSize = 12.sp)
+                                Text(stringResource(R.string.btn_settings), color = Color.White, fontSize = 12.sp)
                             }
                         }
                     }
@@ -405,12 +406,12 @@ fun KeywordAlarmApp() {
                         ) {
                             Column {
                                 Text(
-                                    if (isServiceEnabled) "감지 중" else "비활성화됨",
+                                    if (isServiceEnabled) stringResource(R.string.status_active) else stringResource(R.string.status_inactive),
                                     color = Color.White.copy(alpha = 0.7f),
                                     fontSize = 12.sp
                                 )
                                 Text(
-                                    "키워드 알람",
+                                    stringResource(R.string.hero_title),
                                     color = Color.White,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 22.sp
@@ -425,7 +426,7 @@ fun KeywordAlarmApp() {
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        if (isServiceEnabled) "알림을 감지하고 있습니다" else "켜기를 눌러 활성화하세요",
+                                        if (isServiceEnabled) stringResource(R.string.status_desc_active) else stringResource(R.string.status_desc_inactive),
                                         color = Color.White.copy(alpha = 0.85f),
                                         fontSize = 12.sp
                                     )
@@ -485,7 +486,7 @@ fun KeywordAlarmApp() {
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                if (isTestAlarmPlaying) "알람 정지" else "테스트 알람",
+                                if (isTestAlarmPlaying) stringResource(R.string.btn_stop_alarm) else stringResource(R.string.btn_test_alarm),
                                 fontSize = 13.sp, fontWeight = FontWeight.Medium
                             )
                         }
@@ -495,7 +496,7 @@ fun KeywordAlarmApp() {
                 Spacer(modifier = Modifier.height(20.dp))
 
                 // ===== 알람 설정 섹션 =====
-                SectionHeader(icon = Icons.Default.Settings, title = "알람 설정")
+                SectionHeader(icon = Icons.Default.Settings, title = stringResource(R.string.section_alarm_settings))
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Card(
@@ -510,7 +511,7 @@ fun KeywordAlarmApp() {
                         SettingRow(
                             icon = Icons.Default.Vibration,
                             iconTint = PrimaryIndigo,
-                            title = "진동",
+                            title = stringResource(R.string.setting_vibration),
                             trailing = {
                                 Switch(
                                     checked = isVibrationEnabled,
@@ -528,7 +529,7 @@ fun KeywordAlarmApp() {
                                     .fillMaxWidth()
                                     .padding(start = 56.dp, end = 16.dp, bottom = 12.dp)
                             ) {
-                                Text("진동 패턴", fontSize = 13.sp, color = TextSecondary)
+                                Text(stringResource(R.string.setting_vibration_pattern), fontSize = 13.sp, color = TextSecondary)
                                 Spacer(modifier = Modifier.height(6.dp))
                                 VibrationPattern.entries.forEach { pattern ->
                                     Row(
@@ -550,7 +551,7 @@ fun KeywordAlarmApp() {
                                             },
                                             colors = RadioButtonDefaults.colors(selectedColor = PrimaryIndigo)
                                         )
-                                        Text(pattern.label, fontSize = 14.sp)
+                                        Text(stringResource(pattern.labelRes()), fontSize = 14.sp)
                                     }
                                 }
                             }
@@ -562,7 +563,7 @@ fun KeywordAlarmApp() {
                         SettingRow(
                             icon = Icons.Default.VolumeUp,
                             iconTint = PrimaryIndigo,
-                            title = "소리",
+                            title = stringResource(R.string.setting_sound),
                             trailing = {
                                 Switch(
                                     checked = isSoundEnabled,
@@ -585,7 +586,7 @@ fun KeywordAlarmApp() {
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text("볼륨 ${volumeLevel.toInt()}%", fontSize = 13.sp, color = TextSecondary)
+                                    Text(stringResource(R.string.setting_volume, volumeLevel.toInt()), fontSize = 13.sp, color = TextSecondary)
                                     OutlinedButton(
                                         onClick = {
                                             if (isPreviewPlaying) {
@@ -611,7 +612,7 @@ fun KeywordAlarmApp() {
                                         )
                                         Spacer(modifier = Modifier.width(4.dp))
                                         Text(
-                                            if (isPreviewPlaying) "정지" else "미리 듣기",
+                                            if (isPreviewPlaying) stringResource(R.string.btn_stop) else stringResource(R.string.btn_preview),
                                             fontSize = 12.sp, color = PrimaryIndigo
                                         )
                                     }
@@ -626,12 +627,12 @@ fun KeywordAlarmApp() {
                                 )
 
                                 Spacer(modifier = Modifier.height(4.dp))
-                                Text("알람음", fontSize = 13.sp, color = TextSecondary)
+                                Text(stringResource(R.string.setting_alarm_sound), fontSize = 13.sp, color = TextSecondary)
                                 Spacer(modifier = Modifier.height(4.dp))
                                 val soundLabel = remember(customSoundUri) { getSystemRingtoneLabel(context, customSoundUri) }
                                 val soundAccessible = remember(customSoundUri) { isUriAccessible(context, customSoundUri) }
                                 if (!soundAccessible && customSoundUri != null) {
-                                    Text("⚠ 파일에 접근할 수 없습니다. 다시 선택해주세요.", fontSize = 12.sp, color = AlarmRed)
+                                    Text(stringResource(R.string.sound_inaccessible), fontSize = 12.sp, color = AlarmRed)
                                 } else {
                                     Text(soundLabel, fontSize = 12.sp, color = PrimaryIndigo, fontWeight = FontWeight.Medium)
                                 }
@@ -645,7 +646,7 @@ fun KeywordAlarmApp() {
                                     ) {
                                         Icon(Icons.Default.MusicNote, null, modifier = Modifier.size(15.dp))
                                         Spacer(modifier = Modifier.width(4.dp))
-                                        Text("시스템 알람음", fontSize = 12.sp)
+                                        Text(stringResource(R.string.btn_system_ringtone), fontSize = 12.sp)
                                     }
                                     OutlinedButton(
                                         onClick = { soundPickerLauncher.launch("audio/*") },
@@ -655,7 +656,7 @@ fun KeywordAlarmApp() {
                                     ) {
                                         Icon(Icons.Default.Add, null, modifier = Modifier.size(15.dp))
                                         Spacer(modifier = Modifier.width(4.dp))
-                                        Text("내 파일", fontSize = 12.sp)
+                                        Text(stringResource(R.string.btn_my_files), fontSize = 12.sp)
                                     }
                                 }
                                 if (customSoundUri != null) {
@@ -665,7 +666,7 @@ fun KeywordAlarmApp() {
                                     ) {
                                         Icon(Icons.Default.Refresh, null, modifier = Modifier.size(13.dp), tint = TextSecondary)
                                         Spacer(modifier = Modifier.width(4.dp))
-                                        Text("기본 알람음으로 초기화", fontSize = 12.sp, color = TextSecondary)
+                                        Text(stringResource(R.string.btn_reset_sound), fontSize = 12.sp, color = TextSecondary)
                                     }
                                 }
                             }
@@ -679,7 +680,7 @@ fun KeywordAlarmApp() {
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp, vertical = 12.dp)
                         ) {
-                            Text("알람 반복", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                            Text(stringResource(R.string.setting_alarm_repeat), fontSize = 14.sp, fontWeight = FontWeight.Medium)
                             Spacer(modifier = Modifier.height(8.dp))
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 AlarmRepeat.entries.forEach { repeat ->
@@ -689,7 +690,7 @@ fun KeywordAlarmApp() {
                                             selectedAlarmRepeat = repeat
                                             keywordRepository.setAlarmRepeat(repeat)
                                         },
-                                        label = { Text(repeat.label, fontSize = 12.sp) },
+                                        label = { Text(stringResource(repeat.labelRes()), fontSize = 12.sp) },
                                         colors = FilterChipDefaults.filterChipColors(
                                             selectedContainerColor = PrimaryIndigo,
                                             selectedLabelColor = Color.White
@@ -706,8 +707,8 @@ fun KeywordAlarmApp() {
                         SettingRow(
                             icon = Icons.Default.Notifications,
                             iconTint = PrimaryIndigo,
-                            title = "화면 켜기",
-                            subtitle = "알람 시 잠금화면 위에 알림 표시",
+                            title = stringResource(R.string.setting_wake_screen),
+                            subtitle = stringResource(R.string.setting_wake_screen_desc),
                             trailing = {
                                 Switch(
                                     checked = isWakeScreenEnabled,
@@ -724,7 +725,7 @@ fun KeywordAlarmApp() {
                 Spacer(modifier = Modifier.height(20.dp))
 
                 // ===== 시간대 설정 섹션 =====
-                SectionHeader(icon = Icons.Default.Schedule, title = "시간대 설정", subtitle = "설정한 시간에만 알람이 울립니다")
+                SectionHeader(icon = Icons.Default.Schedule, title = stringResource(R.string.section_schedule), subtitle = stringResource(R.string.section_schedule_desc))
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Card(
@@ -737,7 +738,7 @@ fun KeywordAlarmApp() {
                         SettingRow(
                             icon = Icons.Default.Schedule,
                             iconTint = PrimaryIndigo,
-                            title = "시간대 제한 사용",
+                            title = stringResource(R.string.setting_schedule_enabled),
                             trailing = {
                                 Switch(
                                     checked = isScheduleEnabled,
@@ -757,14 +758,14 @@ fun KeywordAlarmApp() {
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 TimeButton(
-                                    label = "시작",
+                                    label = stringResource(R.string.label_start),
                                     time = "%02d:%02d".format(scheduleStartHour, scheduleStartMinute),
                                     modifier = Modifier.weight(1f),
                                     onClick = { showStartTimePicker = true }
                                 )
                                 Text("~", fontSize = 20.sp, color = TextSecondary, fontWeight = FontWeight.Light)
                                 TimeButton(
-                                    label = "종료",
+                                    label = stringResource(R.string.label_end),
                                     time = "%02d:%02d".format(scheduleEndHour, scheduleEndMinute),
                                     modifier = Modifier.weight(1f),
                                     onClick = { showEndTimePicker = true }
@@ -777,7 +778,7 @@ fun KeywordAlarmApp() {
                 Spacer(modifier = Modifier.height(20.dp))
 
                 // ===== 통합 키워드 섹션 =====
-                SectionHeader(icon = Icons.Default.Search, title = "통합 키워드", subtitle = "모든 앱의 알림에 적용됩니다")
+                SectionHeader(icon = Icons.Default.Search, title = stringResource(R.string.section_global_keywords), subtitle = stringResource(R.string.section_global_keywords_desc))
                 Spacer(modifier = Modifier.height(8.dp))
 
                 KeywordInputRow(
@@ -790,13 +791,13 @@ fun KeywordAlarmApp() {
                             newGlobalKeyword = ""
                         }
                     },
-                    placeholder = "키워드 입력"
+                    placeholder = stringResource(R.string.hint_keyword)
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 if (globalKeywords.isEmpty()) {
-                    EmptyState("등록된 통합 키워드가 없습니다")
+                    EmptyState(stringResource(R.string.empty_global_keywords))
                 } else {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -832,7 +833,7 @@ fun KeywordAlarmApp() {
                 Spacer(modifier = Modifier.height(20.dp))
 
                 // ===== 제외 키워드 섹션 =====
-                SectionHeader(icon = Icons.Default.NotificationsOff, title = "제외 키워드", subtitle = "이 단어가 포함된 알림은 무시합니다")
+                SectionHeader(icon = Icons.Default.NotificationsOff, title = stringResource(R.string.section_exclusion_keywords), subtitle = stringResource(R.string.section_exclusion_keywords_desc))
                 Spacer(modifier = Modifier.height(8.dp))
 
                 var newExclusionKeyword by remember { mutableStateOf("") }
@@ -848,13 +849,13 @@ fun KeywordAlarmApp() {
                             newExclusionKeyword = ""
                         }
                     },
-                    placeholder = "예: 광고, 이벤트"
+                    placeholder = stringResource(R.string.hint_exclusion)
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 if (exclusionKeywords.isEmpty()) {
-                    EmptyState("등록된 제외 키워드가 없습니다")
+                    EmptyState(stringResource(R.string.empty_exclusion_keywords))
                 } else {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -887,7 +888,7 @@ fun KeywordAlarmApp() {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    SectionHeader(icon = Icons.Default.Apps, title = "앱별 키워드", subtitle = "특정 앱에만 적용됩니다")
+                    SectionHeader(icon = Icons.Default.Apps, title = stringResource(R.string.section_app_keywords), subtitle = stringResource(R.string.section_app_keywords_desc))
                     Button(
                         onClick = { showAppSelectDialog = true },
                         colors = ButtonDefaults.buttonColors(containerColor = PrimaryIndigo),
@@ -896,14 +897,14 @@ fun KeywordAlarmApp() {
                     ) {
                         Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("앱 추가", fontSize = 13.sp)
+                        Text(stringResource(R.string.btn_add_app), fontSize = 13.sp)
                     }
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 if (appKeywordsMap.isEmpty()) {
-                    EmptyState("등록된 앱별 키워드가 없습니다\n'앱 추가' 버튼을 눌러 설정하세요")
+                    EmptyState(stringResource(R.string.empty_app_keywords))
                 } else {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         appKeywordsMap.forEach { (packageName, keywords) ->
@@ -966,10 +967,10 @@ fun KeywordAlarmApp() {
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("알림 이력", fontWeight = FontWeight.Medium, fontSize = 15.sp)
+                            Text(stringResource(R.string.section_history), fontWeight = FontWeight.Medium, fontSize = 15.sp)
                             Text(
-                                if (alarmHistory.isEmpty()) "최근 24시간 기록 없음"
-                                else "최근 24시간 ${alarmHistory.size}건",
+                                if (alarmHistory.isEmpty()) stringResource(R.string.history_empty)
+                                else stringResource(R.string.history_count, alarmHistory.size),
                                 fontSize = 12.sp, color = TextSecondary
                             )
                         }
@@ -979,7 +980,7 @@ fun KeywordAlarmApp() {
 
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    "등록한 키워드가 알림에 포함되면 무음 모드에서도 알람이 울립니다",
+                    stringResource(R.string.footer_desc),
                     fontSize = 11.sp, color = TextSecondary,
                     modifier = Modifier.padding(horizontal = 4.dp)
                 )
@@ -1174,12 +1175,12 @@ fun AlarmHistoryDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("알림 이력", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                        Text("최근 24시간", fontSize = 12.sp, color = TextSecondary)
+                        Text(stringResource(R.string.section_history), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text(stringResource(R.string.history_period), fontSize = 12.sp, color = TextSecondary)
                     }
                     if (history.isNotEmpty()) {
                         TextButton(onClick = onClear) {
-                            Text("전체 삭제", fontSize = 12.sp, color = AlarmRed)
+                            Text(stringResource(R.string.btn_clear_all), fontSize = 12.sp, color = AlarmRed)
                         }
                     }
                 }
@@ -1189,7 +1190,7 @@ fun AlarmHistoryDialog(
                         modifier = Modifier.fillMaxSize().padding(32.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("최근 24시간 내 알람 기록이 없습니다", color = TextSecondary, fontSize = 14.sp)
+                        Text(stringResource(R.string.history_empty_detail), color = TextSecondary, fontSize = 14.sp)
                     }
                 } else {
                     LazyColumn(modifier = Modifier.weight(1f)) {
@@ -1212,7 +1213,7 @@ fun AlarmHistoryDialog(
                 TextButton(
                     onClick = onDismiss,
                     modifier = Modifier.align(Alignment.End).padding(8.dp)
-                ) { Text("닫기", color = PrimaryIndigo) }
+                ) { Text(stringResource(R.string.btn_close), color = PrimaryIndigo) }
             }
         }
     }
@@ -1233,12 +1234,12 @@ fun TimePickerDialog(
                 modifier = Modifier.padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("시간 선택", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text(stringResource(R.string.dialog_select_time), fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 Spacer(modifier = Modifier.height(16.dp))
                 TimePicker(state = state)
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = onDismiss) { Text("취소", color = TextSecondary) }
-                    TextButton(onClick = { onConfirm(state.hour, state.minute) }) { Text("확인", color = PrimaryIndigo) }
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_cancel), color = TextSecondary) }
+                    TextButton(onClick = { onConfirm(state.hour, state.minute) }) { Text(stringResource(R.string.btn_confirm), color = PrimaryIndigo) }
                 }
             }
         }
@@ -1305,7 +1306,7 @@ fun AppSelectDialog(onDismiss: () -> Unit, onAppSelected: (AppInfo) -> Unit) {
             colors = CardDefaults.cardColors(containerColor = CardWhite)
         ) {
             Column {
-                Text("앱 선택", fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(20.dp))
+                Text(stringResource(R.string.dialog_select_app), fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(20.dp))
                 HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFEEEEEE))
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(installedApps) { appInfo ->
@@ -1378,7 +1379,7 @@ fun AppKeywordDialog(
                         value = newKeyword,
                         onValueChange = { newKeyword = it },
                         modifier = Modifier.weight(1f),
-                        placeholder = { Text("키워드 입력", fontSize = 14.sp) },
+                        placeholder = { Text(stringResource(R.string.hint_keyword), fontSize = 14.sp) },
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -1402,7 +1403,7 @@ fun AppKeywordDialog(
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 if (keywords.isEmpty()) {
-                    Text("키워드를 추가해주세요", color = TextSecondary, modifier = Modifier.padding(vertical = 8.dp), fontSize = 13.sp)
+                    Text(stringResource(R.string.hint_add_keyword), color = TextSecondary, modifier = Modifier.padding(vertical = 8.dp), fontSize = 13.sp)
                 } else {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         keywords.forEach { keyword ->
@@ -1417,7 +1418,7 @@ fun AppKeywordDialog(
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = onDismiss) { Text("닫기", color = PrimaryIndigo) }
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_close), color = PrimaryIndigo) }
                 }
             }
         }
@@ -1450,7 +1451,7 @@ fun SystemRingtoneDialog(
             colors = CardDefaults.cardColors(containerColor = CardWhite)
         ) {
             Column {
-                Text("알람음 선택", fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(20.dp))
+                Text(stringResource(R.string.dialog_select_ringtone), fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(20.dp))
                 HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFEEEEEE))
                 LazyColumn(modifier = Modifier.weight(1f)) {
                     items(ringtones) { (uri, name) ->
@@ -1472,17 +1473,16 @@ fun SystemRingtoneDialog(
                 TextButton(
                     onClick = onDismiss,
                     modifier = Modifier.align(Alignment.End).padding(8.dp)
-                ) { Text("닫기", color = PrimaryIndigo) }
+                ) { Text(stringResource(R.string.btn_close), color = PrimaryIndigo) }
             }
         }
     }
 }
 
 fun getSystemRingtoneLabel(context: android.content.Context, uri: String?): String {
-    if (uri == null) return "기본 알람음 (시스템)"
+    if (uri == null) return context.getString(R.string.default_alarm_sound)
     return try {
         val parsedUri = Uri.parse(uri)
-        // ContentResolver로 실제 파일명 조회 (내 파일 선택 시)
         val name = context.contentResolver.query(
             parsedUri,
             arrayOf(android.provider.OpenableColumns.DISPLAY_NAME),
@@ -1491,8 +1491,8 @@ fun getSystemRingtoneLabel(context: android.content.Context, uri: String?): Stri
             if (cursor.moveToFirst()) cursor.getString(0) else null
         }
         if (!name.isNullOrBlank()) name
-        else RingtoneManager.getRingtone(context, parsedUri)?.getTitle(context) ?: "커스텀 알람음"
-    } catch (e: Exception) { "커스텀 알람음" }
+        else RingtoneManager.getRingtone(context, parsedUri)?.getTitle(context) ?: context.getString(R.string.custom_alarm_sound)
+    } catch (e: Exception) { context.getString(R.string.custom_alarm_sound) }
 }
 
 // URI가 현재 접근 가능한지 확인
@@ -1626,4 +1626,18 @@ fun BannerAdView() {
 fun isNotificationServiceEnabled(context: android.content.Context): Boolean {
     val flat = Settings.Secure.getString(context.contentResolver, "enabled_notification_listeners")
     return flat?.contains(context.packageName) == true
+}
+
+fun AlarmRepeat.labelRes(): Int = when (this) {
+    AlarmRepeat.ONCE  -> R.string.alarm_repeat_once
+    AlarmRepeat.THREE -> R.string.alarm_repeat_three
+    AlarmRepeat.LOOP  -> R.string.alarm_repeat_loop
+}
+
+fun VibrationPattern.labelRes(): Int = when (this) {
+    VibrationPattern.DEFAULT  -> R.string.vibration_default
+    VibrationPattern.LONG     -> R.string.vibration_long
+    VibrationPattern.ESCALATE -> R.string.vibration_escalate
+    VibrationPattern.RAPID    -> R.string.vibration_rapid
+    VibrationPattern.SOS      -> R.string.vibration_sos
 }

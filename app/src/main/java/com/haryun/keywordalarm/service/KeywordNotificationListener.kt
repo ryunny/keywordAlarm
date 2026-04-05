@@ -22,6 +22,7 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.haryun.keywordalarm.R
 import com.haryun.keywordalarm.data.AlarmRepeat
 import com.haryun.keywordalarm.data.KeywordRepository
 import com.haryun.keywordalarm.data.VibrationPattern
@@ -59,15 +60,15 @@ class KeywordNotificationListener : NotificationListenerService() {
 
             // 알람 채널 (소리/진동 있음)
             nm.createNotificationChannel(
-                NotificationChannel(CHANNEL_ID, "알람키 알림", NotificationManager.IMPORTANCE_HIGH)
-                    .apply { description = "키워드 매칭 시 표시되는 알림" }
+                NotificationChannel(CHANNEL_ID, getString(R.string.notif_channel_alarm_name), NotificationManager.IMPORTANCE_HIGH)
+                    .apply { description = getString(R.string.notif_channel_alarm_desc) }
             )
 
             // 상태 채널 (무음, 항상 표시)
             nm.createNotificationChannel(
-                NotificationChannel(CHANNEL_STATUS_ID, "알람키 상태", NotificationManager.IMPORTANCE_LOW)
+                NotificationChannel(CHANNEL_STATUS_ID, getString(R.string.notif_channel_status_name), NotificationManager.IMPORTANCE_LOW)
                     .apply {
-                        description = "알람키 실행 상태"
+                        description = getString(R.string.notif_channel_status_desc)
                         setSound(null, null)
                         enableVibration(false)
                     }
@@ -86,15 +87,15 @@ class KeywordNotificationListener : NotificationListenerService() {
 
         val notification = NotificationCompat.Builder(this, CHANNEL_STATUS_ID)
             .setSmallIcon(android.R.drawable.ic_lock_silent_mode_off)
-            .setContentTitle("알람키")
-            .setContentText(if (isEnabled) "키워드 감지 중" else "비활성화됨")
+            .setContentTitle(getString(R.string.app_name))
+            .setContentText(if (isEnabled) getString(R.string.notif_status_active) else getString(R.string.status_inactive))
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .setSilent(true)
             .addAction(
                 if (isEnabled) android.R.drawable.ic_media_pause
                 else android.R.drawable.ic_media_play,
-                if (isEnabled) "끄기" else "켜기",
+                if (isEnabled) getString(R.string.btn_off) else getString(R.string.btn_on),
                 togglePendingIntent
             )
             .build()
@@ -274,15 +275,15 @@ class KeywordNotificationListener : NotificationListenerService() {
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_lock_silent_mode_off)
-            .setContentTitle("알람키 — 키워드 감지됨")
-            .setContentText("\"$keyword\" ($appName)")
+            .setContentTitle(getString(R.string.notif_alarm_title))
+            .setContentText(getString(R.string.notif_alarm_content, keyword, appName))
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setOngoing(true)
             .setDeleteIntent(stopPendingIntent)
             .setFullScreenIntent(fullScreenPendingIntent, true) // 잠금화면/사용 중 전체화면으로 표시
-            .addAction(android.R.drawable.ic_media_pause, "정지", stopPendingIntent)
+            .addAction(android.R.drawable.ic_media_pause, getString(R.string.btn_stop), stopPendingIntent)
             .build()
 
         (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
@@ -290,7 +291,7 @@ class KeywordNotificationListener : NotificationListenerService() {
     }
 
     fun triggerTest() {
-        triggerAlarm("테스트 키워드", "알람키")
+        triggerAlarm(getString(R.string.test_keyword), getString(R.string.app_name))
     }
 
     fun stopAlarm() {

@@ -33,6 +33,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.haryun.keywordalarm.R
 import com.haryun.keywordalarm.ui.theme.KeywordAlarmTheme
 
 class AlarmFullScreenActivity : ComponentActivity() {
@@ -141,7 +143,7 @@ fun AlarmFullScreenUI(keyword: String, appName: String, onStop: () -> Unit) {
                 Spacer(modifier = Modifier.height(28.dp))
 
                 Text(
-                    "알람키 — 키워드 감지됨",
+                    stringResource(R.string.alarm_screen_subtitle),
                     color = Color.White.copy(alpha = 0.65f),
                     fontSize = 14.sp,
                     letterSpacing = 1.sp
@@ -189,7 +191,7 @@ fun AlarmFullScreenUI(keyword: String, appName: String, onStop: () -> Unit) {
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            "정지",
+                            stringResource(R.string.btn_stop),
                             color = Color.White,
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp
@@ -199,7 +201,7 @@ fun AlarmFullScreenUI(keyword: String, appName: String, onStop: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    "버튼을 탭하면 알람이 정지됩니다",
+                    stringResource(R.string.alarm_stop_hint),
                     color = Color.White.copy(alpha = 0.45f),
                     fontSize = 12.sp
                 )

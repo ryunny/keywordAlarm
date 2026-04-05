@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AlarmKey</string>
+
+    <!-- Status -->
+    <string name="status_active">Monitoring</string>
+    <string name="status_inactive">Inactive</string>
+    <string name="status_desc_active">Listening for notifications</string>
+    <string name="status_desc_inactive">Tap the switch to activate</string>
+    <string name="hero_title">Keyword Alarm</string>
+
+    <!-- Buttons -->
+    <string name="btn_test_alarm">Test Alarm</string>
+    <string name="btn_stop_alarm">Stop Alarm</string>
+    <string name="btn_stop">Stop</string>
+    <string name="btn_settings">Settings</string>
+    <string name="btn_add_app">Add App</string>
+    <string name="btn_preview">Preview</string>
+    <string name="btn_system_ringtone">System Ringtones</string>
+    <string name="btn_my_files">My Files</string>
+    <string name="btn_reset_sound">Reset to default</string>
+    <string name="btn_clear_all">Clear All</string>
+    <string name="btn_close">Close</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_confirm">OK</string>
+    <string name="btn_on">Enable</string>
+    <string name="btn_off">Disable</string>
+
+    <!-- Alarm banner -->
+    <string name="alarm_active_banner">Alarm is ringing</string>
+
+    <!-- Permission -->
+    <string name="permission_title">Notification Access Required</string>
+    <string name="permission_desc">Permission is needed to detect keywords</string>
+
+    <!-- Sections -->
+    <string name="section_alarm_settings">Alarm Settings</string>
+    <string name="section_schedule">Schedule</string>
+    <string name="section_schedule_desc">Only ring during the set time range</string>
+    <string name="section_global_keywords">Global Keywords</string>
+    <string name="section_global_keywords_desc">Applied to all app notifications</string>
+    <string name="section_exclusion_keywords">Exclusion Keywords</string>
+    <string name="section_exclusion_keywords_desc">Ignore notifications containing these words</string>
+    <string name="section_app_keywords">Per-App Keywords</string>
+    <string name="section_app_keywords_desc">Applied to specific apps only</string>
+
+    <!-- Settings -->
+    <string name="setting_vibration">Vibration</string>
+    <string name="setting_vibration_pattern">Vibration Pattern</string>
+    <string name="setting_sound">Sound</string>
+    <string name="setting_volume">Volume %d%%</string>
+    <string name="setting_alarm_sound">Alarm Sound</string>
+    <string name="setting_alarm_repeat">Alarm Repeat</string>
+    <string name="setting_wake_screen">Wake Screen</string>
+    <string name="setting_wake_screen_desc">Show alarm on lock screen</string>
+    <string name="setting_schedule_enabled">Enable Time Restriction</string>
+
+    <!-- Time -->
+    <string name="label_start">Start</string>
+    <string name="label_end">End</string>
+    <string name="dialog_select_time">Select Time</string>
+
+    <!-- Keywords -->
+    <string name="hint_keyword">Enter keyword</string>
+    <string name="hint_exclusion">e.g. spam, promo</string>
+    <string name="empty_global_keywords">No global keywords added</string>
+    <string name="empty_exclusion_keywords">No exclusion keywords added</string>
+    <string name="empty_app_keywords">No per-app keywords added\nTap \'Add App\' to configure</string>
+    <string name="hint_add_keyword">Add keywords below</string>
+    <string name="dialog_select_app">Select App</string>
+
+    <!-- History -->
+    <string name="section_history">Alarm History</string>
+    <string name="history_empty">No records in the last 24h</string>
+    <string name="history_count">%d alarms in last 24h</string>
+    <string name="history_period">Last 24 hours</string>
+    <string name="history_empty_detail">No alarm records in the last 24 hours</string>
+
+    <!-- Ringtone -->
+    <string name="dialog_select_ringtone">Select Ringtone</string>
+    <string name="default_alarm_sound">Default Alarm (System)</string>
+    <string name="custom_alarm_sound">Custom Alarm Sound</string>
+    <string name="sound_inaccessible">⚠ File is inaccessible. Please select again.</string>
+
+    <!-- Footer -->
+    <string name="footer_desc">Alarm rings even in silent mode when a keyword is detected</string>
+
+    <!-- Notification -->
+    <string name="notif_channel_alarm_name">AlarmKey Alerts</string>
+    <string name="notif_channel_alarm_desc">Shown when a keyword is matched</string>
+    <string name="notif_channel_status_name">AlarmKey Status</string>
+    <string name="notif_channel_status_desc">AlarmKey running status</string>
+    <string name="notif_status_active">Monitoring keywords</string>
+    <string name="notif_alarm_title">AlarmKey — Keyword Detected</string>
+    <string name="notif_alarm_content">\"%1$s\" (%2$s)</string>
+
+    <!-- Alarm screen -->
+    <string name="alarm_screen_subtitle">AlarmKey — Keyword Detected</string>
+    <string name="alarm_stop_hint">Tap the button to stop the alarm</string>
+
+    <!-- Vibration patterns -->
+    <string name="vibration_default">Default (3 short pulses)</string>
+    <string name="vibration_long">Long (1 pulse)</string>
+    <string name="vibration_escalate">Escalating</string>
+    <string name="vibration_rapid">Rapid (7 pulses)</string>
+    <string name="vibration_sos">SOS</string>
+
+    <!-- Alarm repeat -->
+    <string name="alarm_repeat_once">Once</string>
+    <string name="alarm_repeat_three">3 times</string>
+    <string name="alarm_repeat_loop">Loop (2 min)</string>
+
+    <!-- Test -->
+    <string name="test_keyword">Test Keyword</string>
+</resources>
