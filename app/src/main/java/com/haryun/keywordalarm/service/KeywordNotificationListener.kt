@@ -269,6 +269,10 @@ class KeywordNotificationListener : NotificationListenerService() {
             .notify(NOTIFICATION_ID, notification)
     }
 
+    fun triggerTest() {
+        triggerAlarm("테스트 키워드", "알람키")
+    }
+
     fun stopAlarm() {
         stopRunnable?.let { handler.removeCallbacks(it) }
         mediaPlayer?.let { if (it.isPlaying) { it.stop(); it.release() } }

@@ -687,17 +687,24 @@ fun KeywordAlarmApp() {
                                 com.haryun.keywordalarm.service.AlarmController.stop()
                                 isTestAlarmPlaying = false
                             } else {
-                                isTestAlarmPlaying = true
-                                triggerTestAlarm(
-                                    context,
-                                    isVibrationEnabled,
-                                    selectedVibrationPattern,
-                                    isSoundEnabled,
-                                    volumeLevel.toInt(),
-                                    customSoundUri,
-                                    selectedAlarmRepeat,
-                                    onDone = { isTestAlarmPlaying = false }
-                                )
+                                val listener = com.haryun.keywordalarm.service.KeywordNotificationListener.instance
+                                if (listener != null) {
+                                    // 리스너 활성 상태면 실제 알람과 동일하게 실행 (배너 포함)
+                                    listener.triggerTest()
+                                } else {
+                                    // 리스너 미연결 시 소리/진동만
+                                    isTestAlarmPlaying = true
+                                    triggerTestAlarm(
+                                        context,
+                                        isVibrationEnabled,
+                                        selectedVibrationPattern,
+                                        isSoundEnabled,
+                                        volumeLevel.toInt(),
+                                        customSoundUri,
+                                        selectedAlarmRepeat,
+                                        onDone = { isTestAlarmPlaying = false }
+                                    )
+                                }
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
