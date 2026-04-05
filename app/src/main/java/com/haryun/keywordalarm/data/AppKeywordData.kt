@@ -46,17 +46,27 @@ object AppUtils {
         val packageManager = context.packageManager
         val installedApps = packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
 
+        // 안드로이드 내부 시스템 패키지 (알림을 보내지 않는 순수 OS 컴포넌트)
+        val excludedPrefixes = listOf(
+            "com.android.internal", "android.auto_generated", "com.google.android.ext"
+        )
+        val excludedPackages = setOf(
+            "android", "com.android.phone", "com.android.systemui",
+            "com.android.providers.media", "com.android.providers.contacts",
+            "com.android.providers.calendar", "com.android.providers.downloads",
+            "com.android.inputmethod.latin"
+        )
+
         return installedApps
             .filter { appInfo ->
-                // 순수 시스템 앱 제외 (업데이트된 시스템 앱은 포함 — 카카오톡, 크롬 등)
-                val isSystem = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
-                val isUpdatedSystem = (appInfo.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
-                // 앱 이름이 패키지명과 다른 경우 (실제 앱)
-                val hasLabel = try {
+                val pkg = appInfo.packageName
+                if (excludedPackages.contains(pkg)) return@filter false
+                if (excludedPrefixes.any { pkg.startsWith(it) }) return@filter false
+                // 앱 이름이 패키지명과 다른 경우만 (의미있는 앱)
+                try {
                     val label = packageManager.getApplicationLabel(appInfo).toString()
-                    label != appInfo.packageName && label.isNotBlank()
+                    label.isNotBlank() && label != pkg
                 } catch (e: Exception) { false }
-                (!isSystem || isUpdatedSystem) && hasLabel
             }
             .map { appInfo ->
                 AppInfo(
