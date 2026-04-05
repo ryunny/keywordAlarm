@@ -93,6 +93,14 @@ fun KeywordAlarmApp() {
     // 글로벌 키워드
     var globalKeywords by remember { mutableStateOf(keywordRepository.getGlobalKeywords()) }
     var newGlobalKeyword by remember { mutableStateOf("") }
+    // 비활성화된 글로벌 키워드 Set (이 값이 바뀔 때 Compose가 재구성됨)
+    var disabledGlobalKeywords by remember {
+        mutableStateOf(
+            keywordRepository.getGlobalKeywords()
+                .filter { !keywordRepository.isKeywordEnabled("global", it) }
+                .toSet()
+        )
+    }
 
     // 앱별 키워드
     var appKeywordsMap by remember { mutableStateOf(keywordRepository.getAllAppKeywords()) }
@@ -828,15 +836,20 @@ fun KeywordAlarmApp() {
                     globalKeywords.forEach { keyword ->
                         KeywordChip(
                             keyword = keyword,
-                            isEnabled = keywordRepository.isKeywordEnabled("global", keyword),
+                            isEnabled = keyword !in disabledGlobalKeywords,
                             onToggle = {
-                                val cur = keywordRepository.isKeywordEnabled("global", keyword)
-                                keywordRepository.setKeywordEnabled("global", keyword, !cur)
-                                globalKeywords = keywordRepository.getGlobalKeywords()
+                                val nowEnabled = keyword !in disabledGlobalKeywords
+                                keywordRepository.setKeywordEnabled("global", keyword, !nowEnabled)
+                                disabledGlobalKeywords = if (nowEnabled) {
+                                    disabledGlobalKeywords + keyword
+                                } else {
+                                    disabledGlobalKeywords - keyword
+                                }
                             },
                             onDelete = {
                                 keywordRepository.removeGlobalKeyword(keyword)
                                 globalKeywords = keywordRepository.getGlobalKeywords()
+                                disabledGlobalKeywords = disabledGlobalKeywords - keyword
                             }
                         )
                     }
