@@ -183,8 +183,15 @@ class KeywordNotificationListener : NotificationListenerService() {
             mediaPlayer?.release()
 
             val customSoundUri = keywordRepository.getCustomSoundUri()
-            val alarmUri = if (customSoundUri != null) Uri.parse(customSoundUri)
-            else RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+            val customUri = customSoundUri?.let { uriStr ->
+                try {
+                    val uri = Uri.parse(uriStr)
+                    applicationContext.contentResolver.openInputStream(uri)?.close()
+                    uri // 접근 가능하면 사용
+                } catch (e: Exception) { null } // 접근 불가면 기본 알람음으로 폴백
+            }
+            val alarmUri = customUri
+                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
                 ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
 
             val repeat = try {

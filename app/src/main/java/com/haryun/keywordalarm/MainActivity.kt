@@ -629,7 +629,12 @@ fun KeywordAlarmApp() {
                                 Text("알람음", fontSize = 13.sp, color = TextSecondary)
                                 Spacer(modifier = Modifier.height(4.dp))
                                 val soundLabel = remember(customSoundUri) { getSystemRingtoneLabel(context, customSoundUri) }
-                                Text(soundLabel, fontSize = 12.sp, color = PrimaryIndigo, fontWeight = FontWeight.Medium)
+                                val soundAccessible = remember(customSoundUri) { isUriAccessible(context, customSoundUri) }
+                                if (!soundAccessible && customSoundUri != null) {
+                                    Text("⚠ 파일에 접근할 수 없습니다. 다시 선택해주세요.", fontSize = 12.sp, color = AlarmRed)
+                                } else {
+                                    Text(soundLabel, fontSize = 12.sp, color = PrimaryIndigo, fontWeight = FontWeight.Medium)
+                                }
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     OutlinedButton(
@@ -1476,9 +1481,27 @@ fun SystemRingtoneDialog(
 fun getSystemRingtoneLabel(context: android.content.Context, uri: String?): String {
     if (uri == null) return "기본 알람음 (시스템)"
     return try {
-        val ringtone = RingtoneManager.getRingtone(context, Uri.parse(uri))
-        ringtone?.getTitle(context) ?: "커스텀 알람음"
+        val parsedUri = Uri.parse(uri)
+        // ContentResolver로 실제 파일명 조회 (내 파일 선택 시)
+        val name = context.contentResolver.query(
+            parsedUri,
+            arrayOf(android.provider.OpenableColumns.DISPLAY_NAME),
+            null, null, null
+        )?.use { cursor ->
+            if (cursor.moveToFirst()) cursor.getString(0) else null
+        }
+        if (!name.isNullOrBlank()) name
+        else RingtoneManager.getRingtone(context, parsedUri)?.getTitle(context) ?: "커스텀 알람음"
     } catch (e: Exception) { "커스텀 알람음" }
+}
+
+// URI가 현재 접근 가능한지 확인
+fun isUriAccessible(context: android.content.Context, uri: String?): Boolean {
+    if (uri == null) return true
+    return try {
+        context.contentResolver.openInputStream(Uri.parse(uri))?.close()
+        true
+    } catch (e: Exception) { false }
 }
 
 fun startPreviewSound(
@@ -1488,8 +1511,12 @@ fun startPreviewSound(
     onStop: () -> Unit
 ): MediaPlayer? {
     return try {
-        val alarmUri = if (customSoundUri != null) Uri.parse(customSoundUri)
-        else RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+        // 커스텀 URI가 접근 불가(앱 재시작 후 권한 만료)이면 기본 알람음으로 폴백
+        val resolvedUri = if (customSoundUri != null && isUriAccessible(context, customSoundUri))
+            Uri.parse(customSoundUri)
+        else null
+        val alarmUri = resolvedUri
+            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
             ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
 
         val audioManager = context.getSystemService(android.content.Context.AUDIO_SERVICE) as AudioManager
