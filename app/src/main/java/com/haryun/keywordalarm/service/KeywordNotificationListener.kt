@@ -275,7 +275,9 @@ class KeywordNotificationListener : NotificationListenerService() {
 
     fun stopAlarm() {
         stopRunnable?.let { handler.removeCallbacks(it) }
-        mediaPlayer?.let { if (it.isPlaying) { it.stop(); it.release() } }
+        mediaPlayer?.let {
+            try { if (it.isPlaying) { it.stop(); it.release() } } catch (e: Exception) {}
+        }
         mediaPlayer = null
     }
 

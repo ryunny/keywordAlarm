@@ -5,7 +5,7 @@ import android.media.MediaPlayer
 object AlarmController {
     private var currentPlayer: MediaPlayer? = null
 
-    fun isPlaying(): Boolean = currentPlayer?.isPlaying == true
+    fun isPlaying(): Boolean = try { currentPlayer?.isPlaying == true } catch (e: Exception) { false }
 
     fun register(player: MediaPlayer) {
         currentPlayer = player
