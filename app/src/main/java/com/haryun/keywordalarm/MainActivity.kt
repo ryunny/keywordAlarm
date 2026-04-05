@@ -150,6 +150,17 @@ fun KeywordAlarmApp() {
     // 테스트 알람 재생 중 여부
     var isTestAlarmPlaying by remember { mutableStateOf(false) }
 
+    // 실제 알람 재생 중 여부 (0.5초마다 폴링)
+    var isAlarmActive by remember { mutableStateOf(com.haryun.keywordalarm.service.AlarmController.isPlaying()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(500)
+            val playing = com.haryun.keywordalarm.service.AlarmController.isPlaying()
+            if (isAlarmActive != playing) isAlarmActive = playing
+            if (!playing && isTestAlarmPlaying) isTestAlarmPlaying = false
+        }
+    }
+
     // 시스템 알람음 다이얼로그
     var showSystemRingtoneDialog by remember { mutableStateOf(false) }
 
@@ -299,6 +310,54 @@ fun KeywordAlarmApp() {
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
+            // 알람 울리는 중 정지 배너
+            if (isAlarmActive) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            com.haryun.keywordalarm.service.AlarmController.stop()
+                            isAlarmActive = false
+                            isTestAlarmPlaying = false
+                        },
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Default.Notifications,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "알람이 울리는 중입니다",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Default.Stop,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("정지", color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
             // 알림 접근 권한 카드
             Card(
                 modifier = Modifier.fillMaxWidth(),
