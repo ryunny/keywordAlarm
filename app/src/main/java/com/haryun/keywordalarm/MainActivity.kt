@@ -1321,39 +1321,74 @@ fun AppKeywordCard(
 fun AppSelectDialog(onDismiss: () -> Unit, onAppSelected: (AppInfo) -> Unit) {
     val context = LocalContext.current
     val installedApps = remember { AppUtils.getInstalledApps(context) }
+    var searchQuery by remember { mutableStateOf("") }
+    val filteredApps = remember(searchQuery) {
+        if (searchQuery.isBlank()) installedApps
+        else installedApps.filter { it.appName.contains(searchQuery, ignoreCase = true) }
+    }
     Dialog(onDismissRequest = onDismiss) {
         Card(
-            modifier = Modifier.fillMaxWidth().fillMaxHeight(0.7f),
+            modifier = Modifier.fillMaxWidth().fillMaxHeight(0.8f),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = CardWhite)
         ) {
             Column {
-                Text(stringResource(R.string.dialog_select_app), fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(20.dp))
-                HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFEEEEEE))
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(installedApps) { appInfo ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth()
-                                .clickable { onAppSelected(appInfo) }
-                                .padding(horizontal = 20.dp, vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            appInfo.icon?.let { drawable ->
-                                Image(
-                                    bitmap = drawable.toBitmap(48, 48).asImageBitmap(),
-                                    contentDescription = appInfo.appName,
-                                    modifier = Modifier.size(38.dp).clip(RoundedCornerShape(9.dp))
-                                )
-                            } ?: Box(
-                                modifier = Modifier.size(38.dp).clip(RoundedCornerShape(9.dp)).background(PrimaryIndigo.copy(alpha = 0.1f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(Icons.Default.Apps, null, tint = PrimaryIndigo)
+                Text(stringResource(R.string.dialog_select_app), fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(start = 20.dp, top = 20.dp, end = 20.dp, bottom = 12.dp))
+                // 검색창
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    placeholder = { Text("앱 검색", fontSize = 14.sp) },
+                    leadingIcon = { Icon(Icons.Default.Search, null, tint = TextSecondary, modifier = Modifier.size(20.dp)) },
+                    trailingIcon = {
+                        if (searchQuery.isNotBlank()) {
+                            IconButton(onClick = { searchQuery = "" }, modifier = Modifier.size(20.dp)) {
+                                Icon(Icons.Default.Close, null, tint = TextSecondary, modifier = Modifier.size(18.dp))
                             }
-                            Spacer(modifier = Modifier.width(14.dp))
-                            Text(appInfo.appName, fontSize = 14.sp)
                         }
-                        HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFF5F5F5))
+                    },
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = PrimaryIndigo,
+                        unfocusedBorderColor = Color(0xFFDDDDDD)
+                    )
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFEEEEEE))
+                if (filteredApps.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("검색 결과가 없습니다", color = TextSecondary, fontSize = 13.sp)
+                    }
+                } else {
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(filteredApps) { appInfo ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth()
+                                    .clickable { onAppSelected(appInfo) }
+                                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                appInfo.icon?.let { drawable ->
+                                    Image(
+                                        bitmap = drawable.toBitmap(48, 48).asImageBitmap(),
+                                        contentDescription = appInfo.appName,
+                                        modifier = Modifier.size(38.dp).clip(RoundedCornerShape(9.dp))
+                                    )
+                                } ?: Box(
+                                    modifier = Modifier.size(38.dp).clip(RoundedCornerShape(9.dp)).background(PrimaryIndigo.copy(alpha = 0.1f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Default.Apps, null, tint = PrimaryIndigo)
+                                }
+                                Spacer(modifier = Modifier.width(14.dp))
+                                Text(appInfo.appName, fontSize = 14.sp)
+                            }
+                            HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFF5F5F5))
+                        }
                     }
                 }
             }

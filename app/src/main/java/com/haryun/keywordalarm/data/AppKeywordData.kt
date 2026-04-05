@@ -48,14 +48,15 @@ object AppUtils {
 
         return installedApps
             .filter { appInfo ->
-                // 시스템 앱 제외 (사용자 설치 앱만)
-                (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) == 0 ||
-                // 또는 업데이트된 시스템 앱 포함 (카카오톡 등)
-                (appInfo.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
-            }
-            .filter { appInfo ->
-                // 런처 아이콘이 있는 앱만 (백그라운드 서비스 제외)
-                packageManager.getLaunchIntentForPackage(appInfo.packageName) != null
+                // 순수 시스템 앱 제외 (업데이트된 시스템 앱은 포함 — 카카오톡, 크롬 등)
+                val isSystem = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+                val isUpdatedSystem = (appInfo.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
+                // 앱 이름이 패키지명과 다른 경우 (실제 앱)
+                val hasLabel = try {
+                    val label = packageManager.getApplicationLabel(appInfo).toString()
+                    label != appInfo.packageName && label.isNotBlank()
+                } catch (e: Exception) { false }
+                (!isSystem || isUpdatedSystem) && hasLabel
             }
             .map { appInfo ->
                 AppInfo(
