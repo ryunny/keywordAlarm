@@ -4,12 +4,48 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
+    <!-- 왼쪽 외부 사운드 웨이브 -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:strokeAlpha="0.45"
+        android:pathData="M24,36 Q10,54 24,72" />
+
+    <!-- 왼쪽 내부 사운드 웨이브 -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.8"
+        android:strokeLineCap="round"
+        android:strokeAlpha="0.75"
+        android:pathData="M30,42 Q20,54 30,66" />
+
+    <!-- 오른쪽 내부 사운드 웨이브 -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.8"
+        android:strokeLineCap="round"
+        android:strokeAlpha="0.75"
+        android:pathData="M78,42 Q88,54 78,66" />
+
+    <!-- 오른쪽 외부 사운드 웨이브 -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:strokeAlpha="0.45"
+        android:pathData="M84,36 Q98,54 84,72" />
+
     <!-- Bell handle -->
     <path
         android:fillColor="#FFFFFF"
         android:pathData="M51,22 Q54,18 57,22 L57,30 L51,30 Z" />
 
-    <!-- Bell body (smaller, centered) -->
+    <!-- Bell body -->
     <path
         android:fillColor="#FFFFFF"
         android:pathData="M54,30 C40,30 32,42 32,54 L32,62 Q32,67 37,67 L71,67 Q76,67 76,62 L76,54 C76,42 68,30 54,30 Z" />
