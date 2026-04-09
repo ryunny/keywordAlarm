@@ -28,8 +28,8 @@ class KeywordRepository(private val context: Context) {
         private const val KEY_SCHEDULE_END_HOUR = "schedule_end_hour"
         private const val KEY_SCHEDULE_END_MINUTE = "schedule_end_minute"
         private const val KEY_ALARM_HISTORY = "alarm_history"
-        private const val MAX_HISTORY = 50
-        private const val HISTORY_24H_MS = 24 * 60 * 60 * 1000L
+        private const val MAX_HISTORY = 200
+        private const val HISTORY_24H_MS = 7 * 24 * 60 * 60 * 1000L  // 7일
     }
 
     private val prefs: SharedPreferences =
@@ -395,7 +395,7 @@ class KeywordRepository(private val context: Context) {
 enum class AlarmRepeat(val label: String) {
     ONCE("1번만"),
     THREE("3번 반복"),
-    LOOP("계속 반복 (2분)")
+    LOOP("계속 반복")
 }
 
 enum class VibrationPattern(val label: String, val pattern: LongArray) {

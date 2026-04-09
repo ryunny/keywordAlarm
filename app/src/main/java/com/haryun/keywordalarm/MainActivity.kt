@@ -74,6 +74,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import kotlinx.coroutines.launch
 import com.haryun.keywordalarm.ui.theme.KeywordAlarmTheme
 
 // 디자인 색상 상수
@@ -90,6 +93,10 @@ private val GreenSuccessBg = Color(0xFFE8F5E9)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val requestConfiguration = com.google.android.gms.ads.RequestConfiguration.Builder()
+            .setMaxAdContentRating(com.google.android.gms.ads.RequestConfiguration.MAX_AD_CONTENT_RATING_G)
+            .build()
+        com.google.android.gms.ads.MobileAds.setRequestConfiguration(requestConfiguration)
         com.google.android.gms.ads.MobileAds.initialize(this)
         enableEdgeToEdge()
         setContent {
@@ -132,6 +139,7 @@ fun KeywordAlarmApp() {
         }
     }
 
+    var hasFullScreenIntentPermission by remember { mutableStateOf(isFullScreenIntentPermissionGranted(context)) }
     var isWakeScreenEnabled by remember { mutableStateOf(keywordRepository.isWakeScreenEnabled()) }
     var selectedAlarmRepeat by remember {
         mutableStateOf(
@@ -204,6 +212,7 @@ fun KeywordAlarmApp() {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 hasNotificationAccess = isNotificationServiceEnabled(context)
+                hasFullScreenIntentPermission = isFullScreenIntentPermissionGranted(context)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -304,11 +313,15 @@ fun KeywordAlarmApp() {
             }
         }
     ) { paddingValues ->
+        val scrollState = rememberScrollState()
+        val coroutineScope = rememberCoroutineScope()
+        var keywordSectionY by remember { mutableStateOf(0) }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
         ) {
             // ===== 알람 울리는 중 정지 배너 =====
             if (isAlarmActive) {
@@ -381,6 +394,49 @@ fun KeywordAlarmApp() {
                     Spacer(modifier = Modifier.height(12.dp))
                 }
 
+                // ===== 전체화면 알람 권한 안내 (Android 14+, 화면 켜기 ON 상태) =====
+                if (isWakeScreenEnabled && !hasFullScreenIntentPermission) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.Notifications,
+                                contentDescription = null,
+                                tint = AccentOrange,
+                                modifier = Modifier.size(28.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("화면 켜기 권한 필요", fontWeight = FontWeight.Bold, color = AccentOrange, fontSize = 14.sp)
+                                Text("알람 시 자동으로 화면을 켜려면 전체화면 알람 권한이 필요해요.", fontSize = 12.sp, color = TextSecondary)
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            FilledTonalButton(
+                                onClick = {
+                                    val intent = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                                        Intent(
+                                            Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT,
+                                            Uri.parse("package:${context.packageName}")
+                                        )
+                                    } else null
+                                    intent?.let { context.startActivity(it) }
+                                },
+                                colors = ButtonDefaults.filledTonalButtonColors(containerColor = AccentOrange),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
+                                Text("허용하기", color = Color.White, fontSize = 12.sp)
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
                 // ===== 서비스 히어로 카드 =====
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -437,6 +493,11 @@ fun KeywordAlarmApp() {
                                 onCheckedChange = { enabled ->
                                     isServiceEnabled = enabled
                                     keywordRepository.setServiceEnabled(enabled)
+                                    if (enabled) {
+                                        coroutineScope.launch {
+                                            scrollState.animateScrollTo(keywordSectionY)
+                                        }
+                                    }
                                 },
                                 enabled = hasNotificationAccess,
                                 colors = SwitchDefaults.colors(
@@ -592,6 +653,12 @@ fun KeywordAlarmApp() {
                                     onCheckedChange = {
                                         isSoundEnabled = it
                                         keywordRepository.setSoundEnabled(it)
+                                        if (!it && isPreviewPlaying) {
+                                            previewMediaPlayer.value?.stop()
+                                            previewMediaPlayer.value?.release()
+                                            previewMediaPlayer.value = null
+                                            isPreviewPlaying = false
+                                        }
                                     }
                                 )
                             }
@@ -800,7 +867,12 @@ fun KeywordAlarmApp() {
                 Spacer(modifier = Modifier.height(20.dp))
 
                 // ===== 통합 키워드 섹션 =====
-                SectionHeader(icon = Icons.Default.Search, title = stringResource(R.string.section_global_keywords), subtitle = stringResource(R.string.section_global_keywords_desc))
+                SectionHeader(
+                    modifier = Modifier.onGloballyPositioned { keywordSectionY = it.positionInRoot().y.toInt() },
+                    icon = Icons.Default.Search,
+                    title = stringResource(R.string.section_global_keywords),
+                    subtitle = stringResource(R.string.section_global_keywords_desc)
+                )
                 Spacer(modifier = Modifier.height(8.dp))
 
                 KeywordInputRow(
@@ -1018,9 +1090,10 @@ fun KeywordAlarmApp() {
 fun SectionHeader(
     icon: ImageVector,
     title: String,
-    subtitle: String? = null
+    subtitle: String? = null,
+    modifier: Modifier = Modifier
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
         Icon(icon, null, tint = PrimaryIndigo, modifier = Modifier.size(20.dp))
         Spacer(modifier = Modifier.width(8.dp))
         Column {
@@ -1697,6 +1770,13 @@ fun BannerAdView() {
 fun isNotificationServiceEnabled(context: android.content.Context): Boolean {
     val flat = Settings.Secure.getString(context.contentResolver, "enabled_notification_listeners")
     return flat?.contains(context.packageName) == true
+}
+
+fun isFullScreenIntentPermissionGranted(context: android.content.Context): Boolean {
+    return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        val nm = context.getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+        nm.canUseFullScreenIntent()
+    } else true
 }
 
 fun AlarmRepeat.labelRes(): Int = when (this) {
